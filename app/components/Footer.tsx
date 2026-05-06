@@ -183,7 +183,7 @@ export default function Footer() {
                 <IconBrandWhatsapp size={15} color="#25D366" /> WhatsApp Us
               </a>
               <a
-                href="https://share.google/rK3SeF47wLsuIKe83"
+                href="https://maps.google.com/?q=Shree+Manjunatha+Engineering+Works+Mysore"
                 target="_blank"
                 rel="noreferrer"
                 style={{
