@@ -133,7 +133,7 @@ export default function Testimonials() {
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 14, fontSize: 11, color: '#555' }}>
-          {cur + 1} / {testimonials.length} · Auto-advances every 4.5 seconds
+          {cur + 1} / {testimonials.length}
         </p>
       </div>
     </section>
