@@ -88,7 +88,9 @@ export default function Navbar() {
                 Engineering
               </>
             ) : (
-              <span style={{ color: "#b8860b" }}>SMEW</span>
+              <>
+                S<span style={{ color: "#b8860b" }}>M</span>EW
+              </>
             )}
           </div>
 
