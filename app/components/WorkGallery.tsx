@@ -9,20 +9,33 @@ import {
 
 const categories = [
   "All",
-  "Gates",
+  // "Gates",
   // "Safety Doors",
   // "Shutters",
   // "Window Grills",
   // "Railings",
   // "Custom",
+  // "Balcony"
 ];
 
-const photos = Array.from({ length: 42 }, (_, i) => ({
-  id: i + 1,
-  category: categories[1 + (i % (categories.length - 1))],
-  label: `Project ${i + 1}`,
-  src: `https://placehold.co/600x450/f0ede8/b8860b?text=Project+${i + 1}`,
-}));
+const photos = [
+  { id: 1, category: "All", label: "Home", src: "/Gallery/all1.jpeg" },
+  { id: 2, category: "All", label: "Home", src: "/Gallery/all2.jpeg" },
+  { id: 3, category: "All", label: "Home", src: "/Gallery/all3.jpeg" },
+  { id: 4, category: "All", label: "Home", src: "/Gallery/all4.jpeg" },
+  { id: 5, category: "All", label: "Home", src: "/Gallery/all5.jpeg" },
+  { id: 6, category: "All", label: "Balcony", src: "/Gallery/balcony1.jpeg" },
+  { id: 7, category: "All", label: "Gate", src: "/Gallery/gate1.jpeg" },
+  { id: 8, category: "All", label: "Gate", src: "/Gallery/gate2.jpeg" },
+  { id: 9, category: "All", label: "Gate", src: "/Gallery/gate3.jpeg" },
+  { id: 10, category: "All", label: "Gate", src: "/Gallery/gate4.jpeg" },
+  { id: 11, category: "All", label: "Railings", src: "/Gallery/railings1.jpeg" },
+  { id: 12, category: "All", label: "Safety", src: "/Gallery/safety1.jpeg" },
+  { id: 13, category: "All", label: "Safety", src: "/Gallery/safety2.jpeg" },
+  { id: 14, category: "All", label: "Stairs", src: "/Gallery/stairs1.jpeg" },
+  { id: 15, category: "All", label: "Stairs", src: "/Gallery/stairs2.jpeg" },
+  { id: 16, category: "All", label: "Stairs", src: "/Gallery/stairs3.jpeg" }
+]
 
 export default function WorkGallery() {
   const ref = useRef<HTMLDivElement>(null);
@@ -372,7 +385,7 @@ export default function WorkGallery() {
               boxShadow: "0 2px 12px rgba(0,0,0,0.1)",
               opacity:
                 (dir === "prev" && slideIndex === 0) ||
-                (dir === "next" && slideIndex === maxSlide)
+                  (dir === "next" && slideIndex === maxSlide)
                   ? 0.35
                   : 1,
             }}
