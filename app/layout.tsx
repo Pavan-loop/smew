@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description:
     "Quality steel fabrication in Mysore — gates, safety doors, rolling shutters, window grills, railings and more. 25+ years of trusted service.",
   keywords:
-    "fabrication mysore, gates mysore, steel doors mysore, rolling shutters mysore, window grills mysore",
+    "fabrication mysore, welding shop mysore, steel fabrication mysore, MS fabrication mysore, gates mysore, grills mysore, rolling shutters mysore, safety doors mysore, engineering works mysore, fabrication works mysore, iron works mysore, steel works mysore, shree manjunatha engineering, SMEW fabrications",
 };
 
 export default function RootLayout({
