@@ -70,7 +70,7 @@ export default function Footer() {
               "Services",
               "Work Gallery",
               "Why Choose Us",
-              "Testimonials",
+              // "Testimonials",
               "Contact",
             ].map((link) => (
               <a

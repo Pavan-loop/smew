@@ -29,13 +29,18 @@ const photos = [
   { id: 8, category: "All", label: "Gate", src: "/Gallery/gate2.jpeg" },
   { id: 9, category: "All", label: "Gate", src: "/Gallery/gate3.jpeg" },
   { id: 10, category: "All", label: "Gate", src: "/Gallery/gate4.jpeg" },
-  { id: 11, category: "All", label: "Railings", src: "/Gallery/railings1.jpeg" },
+  {
+    id: 11,
+    category: "All",
+    label: "Railings",
+    src: "/Gallery/railings1.jpeg",
+  },
   { id: 12, category: "All", label: "Safety", src: "/Gallery/safety1.jpeg" },
   { id: 13, category: "All", label: "Safety", src: "/Gallery/safety2.jpeg" },
   { id: 14, category: "All", label: "Stairs", src: "/Gallery/stairs1.jpeg" },
   { id: 15, category: "All", label: "Stairs", src: "/Gallery/stairs2.jpeg" },
-  { id: 16, category: "All", label: "Stairs", src: "/Gallery/stairs3.jpeg" }
-]
+  { id: 16, category: "All", label: "Stairs", src: "/Gallery/stairs3.jpeg" },
+];
 
 export default function WorkGallery() {
   const ref = useRef<HTMLDivElement>(null);
@@ -385,7 +390,7 @@ export default function WorkGallery() {
               boxShadow: "0 2px 12px rgba(0,0,0,0.1)",
               opacity:
                 (dir === "prev" && slideIndex === 0) ||
-                  (dir === "next" && slideIndex === maxSlide)
+                (dir === "next" && slideIndex === maxSlide)
                   ? 0.35
                   : 1,
             }}
