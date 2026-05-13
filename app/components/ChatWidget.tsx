@@ -237,6 +237,17 @@ const GOLD = "#b8860b";
 const DARK = "#0f0f0f";
 const BORDER = "#e4e0da";
 
+function useMobile() {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setMobile(window.innerWidth < 480);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  return mobile;
+}
+
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -246,6 +257,7 @@ export default function ChatWidget() {
   const [notifVisible, setNotifVisible] = useState(true);
   const msgsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const mobile = useMobile();
 
   useEffect(() => {
     setMessages([
@@ -324,10 +336,10 @@ export default function ChatWidget() {
         aria-label="Open chat assistant"
         style={{
           position: "fixed",
-          bottom: 28,
-          right: 28,
-          width: 62,
-          height: 62,
+          bottom: mobile ? 16 : 28,
+          right: mobile ? 16 : 28,
+          width: mobile ? 54 : 62,
+          height: mobile ? 54 : 62,
           borderRadius: "50%",
           background: GOLD,
           border: "none",
@@ -385,12 +397,12 @@ export default function ChatWidget() {
       <div
         style={{
           position: "fixed",
-          bottom: 104,
-          right: 28,
-          width: 368,
-          height: 560,
+          bottom: mobile ? 82 : 104,
+          right: mobile ? 8 : 28,
+          width: mobile ? "calc(100vw - 16px)" : 368,
+          height: mobile ? "calc(100dvh - 100px)" : 560,
           background: "#fff",
-          borderRadius: 16,
+          borderRadius: mobile ? 12 : 16,
           boxShadow: `0 24px 64px rgba(0,0,0,0.18), 0 0 0 1px ${BORDER}`,
           display: "flex",
           flexDirection: "column",
