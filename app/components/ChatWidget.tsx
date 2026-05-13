@@ -302,7 +302,8 @@ export default function ChatWidget() {
       const data = await res.json() as { reply?: string; error?: string };
       if (!res.ok) throw new Error(data.error || "API error");
       setMessages((prev) => [...prev, { role: "bot", content: data.reply! }]);
-    } catch {
+    } catch (err) {
+      console.error("[ChatWidget] API error:", err);
       setMessages((prev) => [
         ...prev,
         {
