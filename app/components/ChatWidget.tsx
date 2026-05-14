@@ -152,6 +152,16 @@ const INTENTS = [
 
   // Trust & experience
   {
+    id: "site_visit",
+    triggers: ["visit my house", "visit my home", "visit my place", "come to my place", "come to my house", "home visit", "site visit", "come and measure", "come for measurement", "visit for quote", "can you come", "can you visit", "do you visit", "will you come", "send someone", "visit us"],
+    reply: "Yes, absolutely! We visit your home or site for free — we'll take the measurements and share a quote with you after the visit. We're available Monday to Saturday (9 AM–7 PM) and also on Sundays for site visits. Call 9986464819 or WhatsApp +91 9986464819 to book your visit.",
+  },
+  {
+    id: "founder",
+    triggers: ["founder", "who founded", "who started", "who owns", "owner", "who is the owner", "who runs", "management", "started by", "founded by"],
+    reply: "Shree Manjunatha Engineering Works was founded by Somraj R, who built the business from the ground up with 25+ years of steel fabrication expertise. Today it is proudly run by his son Prashanth S, continuing the same commitment to quality and trust.",
+  },
+  {
     id: "experience",
     triggers: ["experience", "how long have you been", "how old", "years of experience", "since when", "established", "trusted"],
     reply: "Shree Manjunatha Engineering Works has been serving Mysore for over 25 years. We've completed thousands of projects for homes, apartments, commercial spaces, and industries across Mysore and surrounding areas.",
@@ -183,6 +193,18 @@ const AI_OVERRIDE_KEYWORDS = [
 
 function matchIntent(text: string) {
   const lower = text.toLowerCase().replace(/[^a-z0-9\s'₹]/g, " ");
+
+  // Priority intents — checked before AI override so they're never missed
+  const PRIORITY_IDS = ["site_visit", "warranty", "founder", "hours", "location", "contact", "whatsapp"];
+  for (const id of PRIORITY_IDS) {
+    const intent = INTENTS.find((i) => i.id === id)!;
+    for (const trigger of intent.triggers) {
+      const t = trigger.trim().toLowerCase();
+      if (t.split(/\s+/).length === 1 ? new Set(lower.split(/\s+/)).has(t) : lower.includes(t)) {
+        return intent;
+      }
+    }
+  }
 
   // Complex or analytical questions always go to AI
   if (AI_OVERRIDE_KEYWORDS.some((w) => lower.includes(w))) return null;
@@ -223,7 +245,7 @@ SS (Stainless Steel): Naturally rust and corrosion resistant. Needs only occasio
 For comparison questions (maintenance, durability, which is better): give a clear, specific side-by-side answer for the product they asked about. Do not just say "contact us" — answer the question first, then offer a quote CTA at the end.
 
 KNOWLEDGE BASE:
-Company: Shree Manjunatha Engineering Works (SMEW). 25+ years in Mysore. Tagline: "Built Once. Built Right." 1000+ satisfied customers.
+Company: Shree Manjunatha Engineering Works (SMEW). 25+ years in Mysore. Tagline: "Built Once. Built Right." 1000+ satisfied customers. Founded by Somraj R, currently run by his son Prashanth S.
 Services: Main Gates (MS & SS), Safety Doors, Rolling Shutters, Window Grills, Staircase Railings, Collapsible Gates, Compound Walls, Garage Doors, MS Fabrication, Steel Structures (canopies, pergolas), Repairs & Welding, Custom Orders.
 Contact: Phone 9986464819, WhatsApp +91 9986464819.
 Location: 24/2, near Basaveshwara Temple, Kuppalur, Mysuru, Karnataka 570031.
