@@ -456,6 +456,7 @@ export default function ChatWidget() {
           right: mobile ? 8 : 28,
           width: mobile ? "calc(100vw - 16px)" : 368,
           height: mobile ? "calc(100dvh - 100px)" : 560,
+          maxHeight: "calc(100dvh - 200px)",
           background: "#fff",
           borderRadius: mobile ? 12 : 16,
           boxShadow: `0 24px 64px rgba(0,0,0,0.18), 0 0 0 1px ${BORDER}`,
