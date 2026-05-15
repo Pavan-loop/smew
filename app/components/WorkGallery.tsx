@@ -9,37 +9,52 @@ import {
 
 const categories = [
   "All",
-  // "Gates",
+  "Gates",
   // "Safety Doors",
   // "Shutters",
   // "Window Grills",
   // "Railings",
   // "Custom",
-  // "Balcony"
+  "Stairs",
+  "Roofing",
+  "Balcony",
 ];
 
 const photos = [
-  { id: 1, category: "All", label: "Home", src: "/Gallery/all1.jpeg" },
-  { id: 2, category: "All", label: "Home", src: "/Gallery/all2.jpeg" },
-  { id: 3, category: "All", label: "Home", src: "/Gallery/all3.jpeg" },
-  { id: 4, category: "All", label: "Home", src: "/Gallery/all4.jpeg" },
-  { id: 5, category: "All", label: "Home", src: "/Gallery/all5.jpeg" },
-  { id: 6, category: "All", label: "Balcony", src: "/Gallery/balcony1.jpeg" },
-  { id: 7, category: "All", label: "Gate", src: "/Gallery/gate1.jpeg" },
-  { id: 8, category: "All", label: "Gate", src: "/Gallery/gate2.jpeg" },
-  { id: 9, category: "All", label: "Gate", src: "/Gallery/gate3.jpeg" },
-  { id: 10, category: "All", label: "Gate", src: "/Gallery/gate4.jpeg" },
-  {
-    id: 11,
-    category: "All",
-    label: "Railings",
-    src: "/Gallery/railings1.jpeg",
-  },
-  { id: 12, category: "All", label: "Safety", src: "/Gallery/safety1.jpeg" },
-  { id: 13, category: "All", label: "Safety", src: "/Gallery/safety2.jpeg" },
-  { id: 14, category: "All", label: "Stairs", src: "/Gallery/stairs1.jpeg" },
-  { id: 15, category: "All", label: "Stairs", src: "/Gallery/stairs2.jpeg" },
-  { id: 16, category: "All", label: "Stairs", src: "/Gallery/stairs3.jpeg" },
+  // ── All (general showcase) ──
+  { id: 1,  category: "All",     label: "Our Work",  src: "/Gallery/all1.jpeg" },
+  { id: 2,  category: "All",     label: "Our Work",  src: "/Gallery/all2.jpeg" },
+  { id: 3,  category: "All",     label: "Our Work",  src: "/Gallery/all3.jpeg" },
+  { id: 4,  category: "All",     label: "Our Work",  src: "/Gallery/all4.jpeg" },
+  { id: 5,  category: "All",     label: "Our Work",  src: "/Gallery/all5.jpeg" },
+  { id: 6,  category: "All",     label: "Our Work",  src: "/Gallery/all6.jpeg" },
+  // ── Gates ──
+  { id: 7,  category: "Gates",   label: "Main Gate", src: "/Gallery/gate1.jpeg" },
+  { id: 8,  category: "Gates",   label: "Main Gate", src: "/Gallery/gate2.jpeg" },
+  { id: 9,  category: "Gates",   label: "Main Gate", src: "/Gallery/gate3.jpeg" },
+  { id: 10, category: "Gates",   label: "Main Gate", src: "/Gallery/gate4.jpeg" },
+  // ── Stairs ──
+  { id: 11, category: "Stairs",  label: "Staircase", src: "/Gallery/stairs1.jpeg" },
+  { id: 12, category: "Stairs",  label: "Staircase", src: "/Gallery/stairs2.jpeg" },
+  { id: 13, category: "Stairs",  label: "Staircase", src: "/Gallery/stairs3.jpeg" },
+  { id: 14, category: "Stairs",  label: "Staircase", src: "/Gallery/stairs4.jpeg" },
+  { id: 15, category: "Stairs",  label: "Staircase", src: "/Gallery/stairs5.jpeg" },
+  { id: 16, category: "Stairs",  label: "Staircase", src: "/Gallery/stairs6.jpeg" },
+  { id: 17, category: "Stairs",  label: "Staircase", src: "/Gallery/stairs7.jpeg" },
+  { id: 18, category: "Stairs",  label: "Staircase", src: "/Gallery/stairs8.jpeg" },
+  { id: 19, category: "Stairs",  label: "Staircase", src: "/Gallery/stairs9.jpeg" },
+  { id: 20, category: "Stairs",  label: "Staircase", src: "/Gallery/stairs10.jpeg" },
+  // ── Roofing ──
+  { id: 21, category: "Roofing", label: "Roofing",   src: "/Gallery/roofing.jpeg" },
+  { id: 22, category: "Roofing", label: "Roofing",   src: "/Gallery/roofing1.jpeg" },
+  { id: 23, category: "Roofing", label: "Roofing",   src: "/Gallery/roofing2.jpeg" },
+  // ── Balcony ──
+  { id: 24, category: "Balcony", label: "Balcony",   src: "/Gallery/balcony1.jpeg" },
+  { id: 25, category: "Balcony", label: "Balcony",   src: "/Gallery/balcony2.jpeg" },
+  // ── Railings & Safety (in All until categories are enabled) ──
+  { id: 26, category: "All",     label: "Railings",  src: "/Gallery/railings1.jpeg" },
+  { id: 27, category: "All",     label: "Safety Door", src: "/Gallery/safety1.jpeg" },
+  { id: 28, category: "All",     label: "Safety Door", src: "/Gallery/safety2.jpeg" },
 ];
 
 export default function WorkGallery() {
