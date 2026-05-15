@@ -158,7 +158,7 @@ const INTENTS = [
   },
   {
     id: "founder",
-    triggers: ["founder", "who founded", "who started", "who owns", "owner", "who is the owner", "who runs", "management", "started by", "founded by"],
+    triggers: ["founder", "who founded", "who started", "who owns", "who is the owner", "who runs the", "who manages", "management", "started by", "founded by", "prashanth", "somraj"],
     reply: "Shree Manjunatha Engineering Works was founded by Somraj R, who built the business from the ground up with 25+ years of steel fabrication expertise. Today it is proudly run by his son Prashanth S, continuing the same commitment to quality and trust.",
   },
   {
@@ -191,11 +191,21 @@ const AI_OVERRIDE_KEYWORDS = [
   "after how many years", "how long will it last", "quality assurance",
 ];
 
+// Question words that indicate a specific/complex query — route to AI if message is long
+const QUESTION_STARTERS = [
+  "can i ", "can you ", "do you ", "do i ", "will you ", "will the ",
+  "how do ", "how does ", "how can ", "should i ", "is there ", "are there ",
+  "or do you", "or can you", "what type", "what kind", "what gauge",
+  "what thickness", "what finish", "do you handle", "do you provide",
+  "do you offer", "do you come", "do you deliver", "do you install",
+];
+
 function matchIntent(text: string) {
   const lower = text.toLowerCase().replace(/[^a-z0-9\s'₹]/g, " ");
+  const wordCount = lower.trim().split(/\s+/).length;
 
-  // Priority intents — checked before AI override so they're never missed
-  const PRIORITY_IDS = ["site_visit", "warranty", "founder", "hours", "location", "contact", "whatsapp"];
+  // Priority intents — checked before everything so they're never missed
+  const PRIORITY_IDS = ["site_visit", "warranty", "hours", "location", "contact", "whatsapp"];
   for (const id of PRIORITY_IDS) {
     const intent = INTENTS.find((i) => i.id === id)!;
     for (const trigger of intent.triggers) {
@@ -206,7 +216,10 @@ function matchIntent(text: string) {
     }
   }
 
-  // Complex or analytical questions always go to AI
+  // Complex questions (long + starts with a question word) → AI handles them
+  if (wordCount >= 8 && QUESTION_STARTERS.some((w) => lower.includes(w))) return null;
+
+  // Analytical/comparison questions → AI
   if (AI_OVERRIDE_KEYWORDS.some((w) => lower.includes(w))) return null;
 
   const words = new Set(lower.split(/\s+/));
@@ -247,11 +260,21 @@ For comparison questions (maintenance, durability, which is better): give a clea
 KNOWLEDGE BASE:
 Company: Shree Manjunatha Engineering Works (SMEW). 25+ years in Mysore. Tagline: "Built Once. Built Right." 1000+ satisfied customers. Founded by Somraj R, currently run by his son Prashanth S.
 Services: Main Gates (MS & SS), Safety Doors, Rolling Shutters, Window Grills, Staircase Railings, Collapsible Gates, Compound Walls, Garage Doors, MS Fabrication, Steel Structures (canopies, pergolas), Repairs & Welding, Custom Orders.
-Contact: Phone 9986464819, WhatsApp +91 9986464819.
+Contact: Phone 9986464819, WhatsApp +91 9986464819. Customers can WhatsApp Prashanth S directly to share requirements, photos, or designs.
 Location: 24/2, near Basaveshwara Temple, Kuppalur, Mysuru, Karnataka 570031.
-Working hours: Monday to Saturday, 9:00 AM to 7:00 PM (workshop open). Sundays: available for site visits — measurements and quotations at the customer's location. Call or WhatsApp to book a Sunday appointment.
+Service area: Primarily Mysuru. For Bangalore and other cities, contact us to discuss — site visits may be arranged.
+Working hours: Monday to Saturday, 9:00 AM to 7:00 PM (workshop open). Sundays: available for site visits — measurements and quotations at the customer's location. Quote shared after visit, not on the spot.
 Pricing: Competitive rates, best value in Mysore. Free site measurement and quotes available.
-Warranty: Damage is very rare because we use high-quality steel and skilled craftsmen. If anything gets damaged after installation, we repair it free of charge. Customer satisfaction is our guarantee.`;
+Warranty: Damage is very rare because we use high-quality steel and skilled craftsmen. If anything gets damaged after installation, we repair it free of charge.
+Custom designs: Yes, we replicate designs from photos, Pinterest, or references. Customers can WhatsApp a photo and we'll fabricate to match.
+Finishing: We offer both powder coating and spray painting. Powder coating is more durable and longer-lasting; spray painting is economical. We recommend powder coating for outdoor products.
+Delivery & installation: We handle delivery and installation to your site within Mysuru. For other locations, discuss with us.
+Rolling shutters: Both manual and motorised/automatic (with remote control) options available.
+Large-scale work: We handle large MS structural works including heavy canopies, shade frames, warehouse structures. No job too big.
+GST & invoicing: We provide formal commercial quotations and GST tax invoices for all work.
+Finishing quality: Welding marks are ground and polished smooth for a clean finish, especially on SS railings. MS products are finished with anti-rust primer before painting or powder coating.
+Compound wall installation: MS fencing rods are either directly inserted into concrete or fixed using anchor bolts, depending on the site condition. We assess during the site visit.
+Gauge/thickness: We use appropriate MS gauge based on the product — heavier gauge for garage doors and shutters, standard gauge for grills and railings. Discuss specific requirements during site visit.`;
 
 type Message = { role: "bot" | "user"; content: string };
 
