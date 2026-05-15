@@ -152,8 +152,18 @@ const INTENTS = [
 
   // Trust & experience
   {
+    id: "finishing",
+    triggers: ["powder coat", "powder coating", "spray paint", "spray painting", "paint", "painting", "finish", "finishing", "coating", "colour", "color", "primer", "oxide", "yellow oxide"],
+    reply: "We apply 1 coat of yellow oxide paint on all our fabricated products. Yellow oxide is an anti-rust primer that protects the steel and provides a solid base finish. For a different colour or additional top coat, feel free to discuss your requirements — call 9986464819 or WhatsApp us.",
+  },
+  {
+    id: "gst",
+    triggers: ["gst", "tax invoice", "gst invoice", "input credit", "gst credit", "commercial quotation", "formal invoice", "billing", "gst number", "gstin", "tax bill"],
+    reply: "We currently do not provide GST invoices or formal tax invoices. We offer a standard quotation for your reference. For billing-related queries, please call us at 9986464819 or WhatsApp +91 9986464819.",
+  },
+  {
     id: "site_visit",
-    triggers: ["visit my house", "visit my home", "visit my place", "come to my place", "come to my house", "home visit", "site visit", "come and measure", "come for measurement", "visit for quote", "can you come", "can you visit", "do you visit", "will you come", "send someone", "visit us"],
+    triggers: ["book a visit", "book a site visit", "schedule a visit", "home visit", "site visit", "free visit", "free site visit"],
     reply: "Yes, absolutely! We visit your home or site for free — we'll take the measurements and share a quote with you after the visit. We're available Monday to Saturday (9 AM–7 PM) and also on Sundays for site visits. Call 9986464819 or WhatsApp +91 9986464819 to book your visit.",
   },
   {
@@ -205,7 +215,7 @@ function matchIntent(text: string) {
   const wordCount = lower.trim().split(/\s+/).length;
 
   // Priority intents — checked before everything so they're never missed
-  const PRIORITY_IDS = ["site_visit", "warranty", "hours", "location", "contact", "whatsapp"];
+  const PRIORITY_IDS = ["finishing", "gst", "hours", "location", "contact", "whatsapp"];
   for (const id of PRIORITY_IDS) {
     const intent = INTENTS.find((i) => i.id === id)!;
     for (const trigger of intent.triggers) {
@@ -262,16 +272,16 @@ Company: Shree Manjunatha Engineering Works (SMEW). 25+ years in Mysore. Tagline
 Services: Main Gates (MS & SS), Safety Doors, Rolling Shutters, Window Grills, Staircase Railings, Collapsible Gates, Compound Walls, Garage Doors, MS Fabrication, Steel Structures (canopies, pergolas), Repairs & Welding, Custom Orders.
 Contact: Phone 9986464819, WhatsApp +91 9986464819. Customers can WhatsApp Prashanth S directly to share requirements, photos, or designs.
 Location: 24/2, near Basaveshwara Temple, Kuppalur, Mysuru, Karnataka 570031.
-Service area: Primarily Mysuru. For Bangalore and other cities, contact us to discuss — site visits may be arranged.
+Service area: We ONLY serve Mysuru (Mysore) and nearby surrounding areas. We do NOT provide services in Bangalore, Chikmagalur, Mangalore, Hassan, or any other city. If someone asks about service outside Mysuru, clearly say we only serve Mysore and surrounding areas, and suggest they contact us to confirm if their location qualifies.
 Working hours: Monday to Saturday, 9:00 AM to 7:00 PM (workshop open). Sundays: available for site visits — measurements and quotations at the customer's location. Quote shared after visit, not on the spot.
 Pricing: Competitive rates, best value in Mysore. Free site measurement and quotes available.
 Warranty: Damage is very rare because we use high-quality steel and skilled craftsmen. If anything gets damaged after installation, we repair it free of charge.
 Custom designs: Yes, we replicate designs from photos, Pinterest, or references. Customers can WhatsApp a photo and we'll fabricate to match.
-Finishing: We offer both powder coating and spray painting. Powder coating is more durable and longer-lasting; spray painting is economical. We recommend powder coating for outdoor products.
+Finishing: We apply 1 coat of yellow oxide paint on all fabricated products. Yellow oxide is an anti-rust primer. We do NOT offer powder coating or spray painting as a standard service. Never mention powder coating or spray painting as options.
 Delivery & installation: We handle delivery and installation to your site within Mysuru. For other locations, discuss with us.
 Rolling shutters: Both manual and motorised/automatic (with remote control) options available.
 Large-scale work: We handle large MS structural works including heavy canopies, shade frames, warehouse structures. No job too big.
-GST & invoicing: We provide formal commercial quotations and GST tax invoices for all work.
+GST & invoicing: We do NOT provide GST invoices or formal tax invoices. We offer a standard quotation only. Never tell customers we provide GST invoices.
 Finishing quality: Welding marks are ground and polished smooth for a clean finish, especially on SS railings. MS products are finished with anti-rust primer before painting or powder coating.
 Compound wall installation: MS fencing rods are either directly inserted into concrete or fixed using anchor bolts, depending on the site condition. We assess during the site visit.
 Gauge/thickness: We use appropriate MS gauge based on the product — heavier gauge for garage doors and shutters, standard gauge for grills and railings. Discuss specific requirements during site visit.`;
