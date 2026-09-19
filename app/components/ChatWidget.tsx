@@ -1,292 +1,35 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import LeadForm from "./LeadForm";
+import WhatsAppButton from "./WhatsAppButton";
+import { Fallback } from "next/dist/client/components/segment-cache/cache-map";
+import { tr } from "framer-motion/client";
 
-// ── INTENT ENGINE ──
-const INTENTS = [
-  // Small talk
-  {
-    id: "greet",
-    triggers: ["hello", "hi", "hey", "good morning", "good afternoon", "good evening", "howdy", "hiya", "sup"],
-    reply: "Hello! Welcome to Shree Manjunatha Engineering Works. I'm here to help with all your steel fabrication needs. How can I assist you today?",
-  },
-  {
-    id: "how_are_you",
-    triggers: ["how are you", "how are you doing", "how's it going", "you okay", "you good"],
-    reply: "I'm doing great, thank you for asking! Ready to help you with your fabrication needs. What can I assist you with today?",
-  },
-  {
-    id: "thanks",
-    triggers: ["thank you", "thanks", "thank you so much", "thanks a lot", "appreciate it", "thx", "ty"],
-    reply: "You're very welcome! Feel free to ask anything else. We're always happy to help.",
-  },
-  {
-    id: "bye",
-    triggers: ["bye", "goodbye", "see you", "take care", "later", "farewell", "good night"],
-    reply: "Goodbye! It was a pleasure. Feel free to reach out anytime — call us at 9986464819 or WhatsApp us. Have a wonderful day!",
-  },
-  {
-    id: "who_are_you",
-    triggers: ["who are you", "what are you", "your name", "introduce yourself", "tell me about yourself"],
-    reply: "I'm the AI assistant for Shree Manjunatha Engineering Works — a trusted steel fabrication workshop in Mysore with 25+ years of experience. Ask me about our services, materials, pricing, or how to get a free quote!",
-  },
-  {
-    id: "help",
-    triggers: ["help", "what can you do", "what do you know", "guide me", "capabilities"],
-    reply: "I can help with our services (gates, grills, shutters, railings and more), materials, pricing, timelines, location, working hours, and how to get a free quote. What would you like to know?",
-  },
+const CHAT_API = process.env.NEXT_PUBLIC_CHAT_API;
+const VISITOR_ID_KEY = "smew_visitor_id";
 
-  // Services
-  {
-    id: "services",
-    triggers: ["services", "what do you do", "what do you offer", "offerings", "what do you make", "what do you fabricate"],
-    reply: "We specialize in: Main Gates, Safety Doors, Rolling Shutters, Window Grills, Staircase Railings, Collapsible Gates, Compound Walls, Garage Doors, MS Fabrication, Steel Structures, Repairs & Welding, and Custom Orders. Which would you like to know more about?",
-  },
-  {
-    id: "gates",
-    triggers: ["gate", "gates", "main gate", "compound gate", "entrance gate", "iron gate", "steel gate", "sliding gate"],
-    reply: "We fabricate heavy-duty main gates in MS (Mild Steel) and SS (Stainless Steel) for homes and commercial spaces — compound gates, entrance gates, and sliding gates. Call 9986464819 for a free site visit and quote.",
-  },
-  {
-    id: "safety_door",
-    triggers: ["safety door", "security door", "grill door", "ms door", "iron door", "security grill", "safety doors"],
-    reply: "Our safety doors include security grill doors, MS doors, and reinforced safety frames designed for maximum protection. Available in various designs for homes, offices, and apartments. Contact us for a custom quote.",
-  },
-  {
-    id: "rolling_shutter",
-    triggers: ["rolling shutter", "shutter", "shop shutter", "garage shutter", "industrial shutter", "shutters"],
-    reply: "We install industrial and commercial rolling shutters for shops, warehouses, factories, and garages — both manual and motorised options. Call 9986464819 or WhatsApp us for a site measurement and quote.",
-  },
-  {
-    id: "window_grill",
-    triggers: ["window grill", "window grills", "grills", "grill", "window guard", "window bars"],
-    reply: "We fabricate custom window grills in designer patterns, classic styles, and heavy-duty security options — made to your exact window measurements. Call us for pricing; we offer the best rates in Mysore.",
-  },
-  {
-    id: "railing",
-    triggers: ["railing", "railings", "staircase railing", "balcony railing", "handrail", "terrace railing", "stair railing"],
-    reply: "We make elegant MS and SS railings for staircases, balconies, and terraces — modern minimalist or ornate traditional styles, fabricated to your exact specifications. Get in touch for a free quote.",
-  },
-  {
-    id: "collapsible",
-    triggers: ["collapsible gate", "collapsible", "folding gate", "foldable gate", "expandable gate"],
-    reply: "Collapsible (folding) gates are perfect for garages, entrances, and narrow spaces — sturdy, space-saving, and available in single or double leaf designs. Contact us at 9986464819 for sizes and pricing.",
-  },
-  {
-    id: "garage_door",
-    triggers: ["garage door", "garage doors", "garage shutter", "car garage", "parking gate"],
-    reply: "We build custom garage doors and shutters — both manual and automation-ready designs. Durable, smooth-operating, and built to last. Call us for a free site measurement and quote.",
-  },
-  {
-    id: "custom",
-    triggers: ["custom order", "custom", "custom design", "custom fabrication", "my own design", "special order", "any design"],
-    reply: "Absolutely! Bring your own design, a photo reference, or just an idea — our craftsmen will fabricate exactly to your specifications. Custom orders are our specialty. Call or WhatsApp us to discuss.",
-  },
-  {
-    id: "warranty",
-    triggers: ["warranty", "guarantee", "warranty on", "damaged later", "if something breaks", "if it breaks", "if it gets damaged", "damage later", "free repair", "after installation", "after work is done", "after fabrication"],
-    reply: "Damage is very rare because we use only high-quality steel and skilled craftsmen. But if anything does get damaged, we repair it free of charge — your satisfaction is our guarantee. Call 9986464819 if you ever face an issue.",
-  },
-  {
-    id: "repair",
-    triggers: ["repair", "repairs", "fix my gate", "broken gate", "broken grill", "refurbish", "rusted gate", "old gate repair"],
-    reply: "Yes, we provide professional repair, welding, and refurbishment for existing gates, doors, grills, and shutters. Don't replace — repair! Call 9986464819 to describe the issue and get an estimate.",
-  },
-  {
-    id: "compound_wall",
-    triggers: ["compound wall", "compound fencing", "boundary wall", "boundary fence", "perimeter fence", "compound"],
-    reply: "We fabricate MS fencing and grills for compound walls and boundary protection. Custom heights and designs available for homes, plots, and commercial premises. Call us for a site visit and quote.",
-  },
-  {
-    id: "steel_structure",
-    triggers: ["steel structure", "canopy", "shade", "pergola", "shed", "awning", "shelter"],
-    reply: "We build small steel structures, canopies, shade frames, and pergolas for outdoor spaces. Strong, weather-resistant, and custom-sized to your space. Contact us for a free quote.",
-  },
+const FALLBACK_MESSAGE =
+  "I couldn't process that right now. Please call us at 9986464819 or WhatsApp +91 9986464819 — we're happy to help!";
 
-  // Materials
-  {
-    id: "materials",
-    triggers: ["what material", "what steel do you use", "what materials", "type of steel", "grade of steel", "quality of steel", "mild steel", "stainless steel option"],
-    reply: "We use only high-grade MS (Mild Steel) and SS (Stainless Steel). MS is great for gates, grills, and structures. SS is ideal for railings and moisture-prone areas. All materials are sourced from trusted suppliers for maximum durability.",
-  },
-  {
-    id: "ss_vs_ms",
-    triggers: ["ms vs ss", "difference between ms and ss", "stainless vs mild steel", "which steel is better", "which steel should i use", "ms or ss", "ss or ms"],
-    reply: "MS (Mild Steel) is strong, cost-effective, and ideal for gates and grills — usually painted to prevent rust. SS (Stainless Steel) is rust-resistant and low-maintenance, better for railings and areas with moisture. We'll recommend the right one for your specific needs.",
-  },
-
-  // Pricing
-  {
-    id: "price",
-    triggers: ["price", "pricing", "cost", "how much", "rate", "budget", "charges", "quote", "estimate", "quotation", "rates", "free quote"],
-    reply: "Pricing depends on the type, size, design, and material chosen. We offer the most competitive rates in Mysore with no compromise on quality. Call 9986464819 or WhatsApp +91 9986464819 for a free quote and site measurement.",
-  },
-
-  // Timeline
-  {
-    id: "timeline",
-    triggers: ["how long", "timeline", "delivery time", "when will it be ready", "time to complete", "how many days", "how many weeks", "turnaround"],
-    reply: "Standard items like grills and small gates are typically ready in 5–10 working days. Larger custom projects may take 2–3 weeks. We always commit to a delivery date and honor it — on-time delivery is our promise.",
-  },
-
-  // Contact & location
-  {
-    id: "contact",
-    triggers: ["contact", "reach you", "get in touch", "speak to someone", "phone number", "number", "call you", "call us"],
-    reply: "Call us at 9986464819 or WhatsApp +91 9986464819. We're at 24/2, near Basaveshwara Temple, Kuppalur, Mysuru 570031. Workshop open Mon–Sat 9 AM–7 PM. Sundays we visit your site for measurements and quotations — call to book.",
-  },
-  {
-    id: "location",
-    triggers: ["location", "address", "where are you", "where is your workshop", "workshop location", "visit you", "find you", "directions"],
-    reply: "We're located at 24/2, near Basaveshwara Temple, Kuppalur, Mysuru, Karnataka 570031. You can also search 'Shree Manjunatha Engineering Works' on Google Maps. Call 9986464819 if you need directions.",
-  },
-  {
-    id: "hours",
-    triggers: ["working hours", "hours", "timing", "timings", "open", "when are you open", "business hours", "open on sunday", "closed on"],
-    reply: "Our workshop is open Monday to Saturday, 9:00 AM – 7:00 PM. On Sundays, we're available for site visits — measurements and quotations at your location. Call or WhatsApp +91 9986464819 to book a Sunday visit.",
-  },
-  {
-    id: "whatsapp",
-    triggers: ["whatsapp", "whatsapp number", "chat on whatsapp", "message us"],
-    reply: "WhatsApp us at +91 9986464819 — just click the WhatsApp button on our website or message us directly. We respond quickly!",
-  },
-
-  // Trust & experience
-  {
-    id: "finishing",
-    triggers: ["powder coat", "powder coating", "spray paint", "spray painting", "paint", "painting", "finish", "finishing", "coating", "colour", "color", "primer", "oxide", "yellow oxide"],
-    reply: "We apply 1 coat of yellow oxide paint on all our fabricated products. Yellow oxide is an anti-rust primer that protects the steel and provides a solid base finish. For a different colour or additional top coat, feel free to discuss your requirements — call 9986464819 or WhatsApp us.",
-  },
-  {
-    id: "gst",
-    triggers: ["gst", "tax invoice", "gst invoice", "input credit", "gst credit", "commercial quotation", "formal invoice", "billing", "gst number", "gstin", "tax bill"],
-    reply: "We currently do not provide GST invoices or formal tax invoices. We offer a standard quotation for your reference. For billing-related queries, please call us at 9986464819 or WhatsApp +91 9986464819.",
-  },
-  {
-    id: "site_visit",
-    triggers: ["book a visit", "book a site visit", "schedule a visit", "home visit", "site visit", "free visit", "free site visit"],
-    reply: "Yes, absolutely! We visit your home or site for free — we'll take the measurements and share a quote with you after the visit. We're available Monday to Saturday (9 AM–7 PM) and also on Sundays for site visits. Call 9986464819 or WhatsApp +91 9986464819 to book your visit.",
-  },
-  {
-    id: "founder",
-    triggers: ["founder", "who founded", "who started", "who owns", "who is the owner", "who runs the", "who manages", "management", "started by", "founded by", "prashanth", "somraj"],
-    reply: "Shree Manjunatha Engineering Works was founded by Somraj R, who built the business from the ground up with 25+ years of steel fabrication expertise. Today it is proudly run by his son Prashanth S, continuing the same commitment to quality and trust.",
-  },
-  {
-    id: "experience",
-    triggers: ["experience", "how long have you been", "how old", "years of experience", "since when", "established", "trusted"],
-    reply: "Shree Manjunatha Engineering Works has been serving Mysore for over 25 years. We've completed thousands of projects for homes, apartments, commercial spaces, and industries across Mysore and surrounding areas.",
-  },
-  {
-    id: "why_choose",
-    triggers: ["why choose you", "why you", "what makes you different", "what is special", "best fabrication", "reasons to choose"],
-    reply: "25+ years of experience, premium quality steel, on-time delivery, affordable pricing, skilled craftsmen, and 1000+ satisfied customers in Mysore. We don't just build structures — we build trust. Call us for a free quote.",
-  },
-];
-
-// Any query containing these words goes straight to AI — intent engine can't reason about them
-const AI_OVERRIDE_KEYWORDS = [
-  // Pricing
-  "price", "cost", "how much", "rate", "per sq", "per square", "per foot",
-  "per feet", "per running", "starting price", "budget", "quotation",
-  "charges", "fee", "expensive", "cheap", "affordable", "rupee", "inr", "₹",
-  // Comparison & analysis
-  "difference", "differ", "compare", "comparison", "versus", " vs ",
-  "maintenance", "maintain", "durability", "durable", "last longer",
-  "lifespan", "life span", "rust", "corrosion", "weather",
-  "pros and cons", "advantages", "disadvantages", "benefit",
-  "in terms of", "which is better", "which one is", "which should i",
-  "explain", "tell me more", "elaborate",
-  // Warranty & damage
-  "warranty", "guarantee", "damaged", "damage", "breaks down", "falls apart",
-  "after how many years", "how long will it last", "quality assurance",
-];
-
-// Question words that indicate a specific/complex query — route to AI if message is long
-const QUESTION_STARTERS = [
-  "can i ", "can you ", "do you ", "do i ", "will you ", "will the ",
-  "how do ", "how does ", "how can ", "should i ", "is there ", "are there ",
-  "or do you", "or can you", "what type", "what kind", "what gauge",
-  "what thickness", "what finish", "do you handle", "do you provide",
-  "do you offer", "do you come", "do you deliver", "do you install",
-];
-
-function matchIntent(text: string) {
-  const lower = text.toLowerCase().replace(/[^a-z0-9\s'₹]/g, " ");
-  const wordCount = lower.trim().split(/\s+/).length;
-
-  // Priority intents — checked before everything so they're never missed
-  const PRIORITY_IDS = ["finishing", "gst", "hours", "location", "contact", "whatsapp"];
-  for (const id of PRIORITY_IDS) {
-    const intent = INTENTS.find((i) => i.id === id)!;
-    for (const trigger of intent.triggers) {
-      const t = trigger.trim().toLowerCase();
-      if (t.split(/\s+/).length === 1 ? new Set(lower.split(/\s+/)).has(t) : lower.includes(t)) {
-        return intent;
-      }
+type ChatAction =
+  | {
+      action: "show_lead_form";
+      service?: string;
+      notes?: string;
+      location?: string;
+      name?: string;
     }
-  }
+  | { action: "show_whatsapp"; url: string }
+  | { action: "acknowledge_existing"; [key: string]: unknown };
 
-  // Complex questions (long + starts with a question word) → AI handles them
-  if (wordCount >= 8 && QUESTION_STARTERS.some((w) => lower.includes(w))) return null;
+type SSEEvent =
+  | { type: "visitor"; visitor_id: string; session_id: string }
+  | { type: "text"; text: string }
+  | ({ type: "action" } & ChatAction)
+  | { type: "done" }
+  | { type: "error"; text: string };
 
-  // Analytical/comparison questions → AI
-  if (AI_OVERRIDE_KEYWORDS.some((w) => lower.includes(w))) return null;
-
-  const words = new Set(lower.split(/\s+/));
-  let best: (typeof INTENTS)[0] | null = null;
-  let bestScore = 0;
-  for (const intent of INTENTS) {
-    for (const trigger of intent.triggers) {
-      const t = trigger.trim().toLowerCase();
-      const tWords = t.split(/\s+/);
-      const matched = tWords.length === 1 ? words.has(t) : lower.includes(t);
-      if (matched) {
-        const score = tWords.length * 6 + t.length;
-        // Single-word triggers need score ≥ 8 to avoid short ambiguous matches
-        if (score > bestScore && (tWords.length > 1 || score >= 8)) {
-          bestScore = score;
-          best = intent;
-        }
-      }
-    }
-  }
-  return best;
-}
-
-const SYSTEM_PROMPT = `You are the AI assistant for Shree Manjunatha Engineering Works, a steel fabrication workshop in Mysore, Karnataka, India with 25+ years of experience. You are knowledgeable, friendly, and professional. Reply in 2-4 sentences max. Use simple English. Never use markdown. Plain conversational text only.
-
-PRICING QUESTIONS — this is critical:
-When asked about price, cost, or rates, always:
-1. Explain the key factors that affect pricing for that specific product (material grade, design complexity, size, finish type).
-2. Give a helpful ballpark (e.g. "SS gates generally cost more than MS due to material — the final price depends on size, design and finish.").
-3. End with: "For an exact quote, call us at 9986464819 or WhatsApp +91 9986464819 — we'll give you a free estimate after a quick site measurement."
-Never say you don't know prices. Always give useful context before directing them to call.
-
-MATERIAL GUIDANCE — answer comparison questions like an expert:
-MS (Mild Steel): Strong, cost-effective. Needs painting or powder-coating every few years to prevent rust. If maintained well, lasts decades. Best for: gates, grills, shutters, structures, compound walls. More affordable.
-SS (Stainless Steel): Naturally rust and corrosion resistant. Needs only occasional wiping — no painting needed. Retains shine for years. Best for: railings, balconies, terraces, coastal or high-moisture areas. Premium cost.
-For comparison questions (maintenance, durability, which is better): give a clear, specific side-by-side answer for the product they asked about. Do not just say "contact us" — answer the question first, then offer a quote CTA at the end.
-
-KNOWLEDGE BASE:
-Company: Shree Manjunatha Engineering Works (SMEW). 25+ years in Mysore. Tagline: "Built Once. Built Right." 1000+ satisfied customers. Founded by Somraj R, currently run by his son Prashanth S.
-Services: Main Gates (MS & SS), Safety Doors, Rolling Shutters, Window Grills, Staircase Railings, Collapsible Gates, Compound Walls, Garage Doors, MS Fabrication, Steel Structures (canopies, pergolas), Repairs & Welding, Custom Orders.
-Contact: Phone 9986464819, WhatsApp +91 9986464819. Customers can WhatsApp Prashanth S directly to share requirements, photos, or designs.
-Location: 24/2, near Basaveshwara Temple, Kuppalur, Mysuru, Karnataka 570031.
-Service area: We ONLY serve Mysuru (Mysore) and nearby surrounding areas. We do NOT provide services in Bangalore, Chikmagalur, Mangalore, Hassan, or any other city. If someone asks about service outside Mysuru, clearly say we only serve Mysore and surrounding areas, and suggest they contact us to confirm if their location qualifies.
-Working hours: Monday to Saturday, 9:00 AM to 7:00 PM (workshop open). Sundays: available for site visits — measurements and quotations at the customer's location. Quote shared after visit, not on the spot.
-Pricing: Competitive rates, best value in Mysore. Free site measurement and quotes available.
-Warranty: Damage is very rare because we use high-quality steel and skilled craftsmen. If anything gets damaged after installation, we repair it free of charge.
-Custom designs: Yes, we replicate designs from photos, Pinterest, or references. Customers can WhatsApp a photo and we'll fabricate to match.
-Finishing: We apply 1 coat of yellow oxide paint on all fabricated products. Yellow oxide is an anti-rust primer. We do NOT offer powder coating or spray painting as a standard service. Never mention powder coating or spray painting as options.
-Delivery & installation: We handle delivery and installation to your site within Mysuru. For other locations, discuss with us.
-Rolling shutters: Both manual and motorised/automatic (with remote control) options available.
-Large-scale work: We handle large MS structural works including heavy canopies, shade frames, warehouse structures. No job too big.
-GST & invoicing: We do NOT provide GST invoices or formal tax invoices. We offer a standard quotation only. Never tell customers we provide GST invoices.
-Finishing quality: Welding marks are ground and polished smooth for a clean finish, especially on SS railings. MS products are finished with anti-rust primer before painting or powder coating.
-Compound wall installation: MS fencing rods are either directly inserted into concrete or fixed using anchor bolts, depending on the site condition. We assess during the site visit.
-Gauge/thickness: We use appropriate MS gauge based on the product — heavier gauge for garage doors and shutters, standard gauge for grills and railings. Discuss specific requirements during site visit.`;
-
-type Message = { role: "bot" | "user"; content: string };
+type Message = { role: "bot" | "user"; content: string; action?: ChatAction };
 
 const GOLD = "#b8860b";
 const DARK = "#0f0f0f";
@@ -307,12 +50,29 @@ export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [leadCaptured, setLeadCaptured] = useState(false);
+  const leadCapturedRef = useRef(false);
   const [loading, setLoading] = useState(false);
+  const [awaitingFirstToken, setAwaitingFirstToken] = useState(false);
   const [chipsHidden, setChipsHidden] = useState(false);
   const [notifVisible, setNotifVisible] = useState(true);
+  const [visitorId, setVisitorId] = useState<string | null>(null);
   const msgsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const visitorIdRef = useRef<string | null>(null);
   const mobile = useMobile();
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(VISITOR_ID_KEY);
+      if (stored) {
+        visitorIdRef.current = stored;
+        setVisitorId(stored);
+      }
+    } catch {
+      // localStorage unavailable — server will issue a fresh visitor id
+    }
+  }, []);
 
   useEffect(() => {
     setMessages([
@@ -325,7 +85,8 @@ export default function ChatWidget() {
   }, []);
 
   useEffect(() => {
-    if (msgsRef.current) msgsRef.current.scrollTop = msgsRef.current.scrollHeight;
+    if (msgsRef.current)
+      msgsRef.current.scrollTop = msgsRef.current.scrollHeight;
   }, [messages, loading]);
 
   function toggle() {
@@ -341,46 +102,108 @@ export default function ChatWidget() {
     if (!chipsHidden) setChipsHidden(true);
 
     const userMsg: Message = { role: "user", content: text };
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg, { role: "bot", content: "" }]);
     setLoading(true);
+    setAwaitingFirstToken(true);
 
-    const intent = matchIntent(text);
-    if (intent) {
-      setMessages((prev) => [...prev, { role: "bot", content: intent.reply }]);
-      setLoading(false);
-      return;
+    function updateLastMessage(updater: (msg: Message) => Message) {
+      setMessages((prev) => {
+        const next = [...prev];
+        next[next.length - 1] = updater(next[next.length - 1]);
+        return next;
+      });
     }
 
     try {
-      const history = [...messages, userMsg];
-      const res = await fetch("/api/chat", {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (visitorIdRef.current) headers["x-visitor-id"] = visitorIdRef.current;
+
+      const history = messages
+        .slice(0, -1)
+        .filter((m) => m.content.trim() !== "" && !m.action)
+        .slice(-20)
+        .map((m) => ({
+          role: m.role === "bot" ? "assistant" : "user",
+          content: m.content,
+        }));
+
+      const res = await fetch(`${CHAT_API}/api/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            ...history.slice(-8).map((m) => ({
-              role: m.role === "bot" ? "assistant" : "user",
-              content: m.content,
-            })),
-          ],
+          message: text,
+          history,
+          lead_captured: leadCapturedRef.current,
         }),
       });
-      const data = await res.json() as { reply?: string; error?: string };
-      if (!res.ok) throw new Error(data.error || "API error");
-      setMessages((prev) => [...prev, { role: "bot", content: data.reply! }]);
+
+      if (!res.ok || !res.body) throw new Error("API error");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const frames = buffer.split("\n\n");
+        buffer = frames.pop() ?? "";
+
+        for (const frame of frames) {
+          const line = frame.trim();
+          if (!line.startsWith("data:")) continue;
+          const jsonStr = line.slice(5).trim();
+          if (!jsonStr) continue;
+
+          let evt: SSEEvent;
+          try {
+            evt = JSON.parse(jsonStr) as SSEEvent;
+          } catch {
+            continue;
+          }
+
+          if (evt.type === "visitor") {
+            visitorIdRef.current = evt.visitor_id;
+            setVisitorId(evt.visitor_id);
+            try {
+              localStorage.setItem(VISITOR_ID_KEY, evt.visitor_id);
+            } catch {
+              // ignore — visitor id just won't persist across sessions
+            }
+          } else if (evt.type === "text") {
+            setAwaitingFirstToken(false);
+            const chunk = evt.text;
+            updateLastMessage((m) => ({ ...m, content: m.content + chunk }));
+          } else if (evt.type === "action") {
+            updateLastMessage((m) => ({
+              ...m,
+              content:
+                m.content ||
+                "Sure, drop your number and we'll call you with a free quote.",
+              action: evt as ChatAction,
+            }));
+            if ((evt as ChatAction).action === "show_lead_form")
+              setLeadCaptured(true);
+            leadCapturedRef.current = true;
+          } else if (evt.type === "error") {
+            console.error("[ChatWidget] stream error:", evt.text);
+            updateLastMessage(() => ({
+              role: "bot",
+              content: FALLBACK_MESSAGE,
+            }));
+          }
+        }
+      }
     } catch (err) {
       console.error("[ChatWidget] API error:", err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "bot",
-          content:
-            "I couldn't process that right now. Please call us at 9986464819 or WhatsApp +91 9986464819 — we're happy to help!",
-        },
-      ]);
+      updateLastMessage(() => ({ role: "bot", content: FALLBACK_MESSAGE }));
     }
     setLoading(false);
+    setAwaitingFirstToken(false);
   }
 
   return (
@@ -404,15 +227,19 @@ export default function ChatWidget() {
           justifyContent: "center",
           boxShadow: "0 6px 24px rgba(184,134,11,0.4)",
           zIndex: 9999,
-          transition: "transform 0.25s cubic-bezier(.34,1.56,.64,1), box-shadow 0.2s",
+          transition:
+            "transform 0.25s cubic-bezier(.34,1.56,.64,1), box-shadow 0.2s",
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.08)";
-          (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 10px 32px rgba(184,134,11,0.5)";
+          (e.currentTarget as HTMLButtonElement).style.transform =
+            "scale(1.08)";
+          (e.currentTarget as HTMLButtonElement).style.boxShadow =
+            "0 10px 32px rgba(184,134,11,0.5)";
         }}
         onMouseLeave={(e) => {
           (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
-          (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 6px 24px rgba(184,134,11,0.4)";
+          (e.currentTarget as HTMLButtonElement).style.boxShadow =
+            "0 6px 24px rgba(184,134,11,0.4)";
         }}
       >
         {notifVisible && (
@@ -439,11 +266,20 @@ export default function ChatWidget() {
         )}
         {open ? (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6l12 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+            <path
+              d="M18 6L6 18M6 6l12 12"
+              stroke="white"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
           </svg>
         ) : (
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" fill="white" opacity="0.9" />
+            <path
+              d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"
+              fill="white"
+              opacity="0.9"
+            />
           </svg>
         )}
       </button>
@@ -464,11 +300,14 @@ export default function ChatWidget() {
           flexDirection: "column",
           overflow: "hidden",
           zIndex: 9998,
-          transform: open ? "scale(1) translateY(0)" : "scale(0.85) translateY(20px)",
+          transform: open
+            ? "scale(1) translateY(0)"
+            : "scale(0.85) translateY(20px)",
           transformOrigin: "bottom right",
           opacity: open ? 1 : 0,
           pointerEvents: open ? "all" : "none",
-          transition: "transform 0.3s cubic-bezier(.34,1.4,.64,1), opacity 0.25s ease",
+          transition:
+            "transform 0.3s cubic-bezier(.34,1.4,.64,1), opacity 0.25s ease",
         }}
       >
         {/* Header */}
@@ -495,7 +334,13 @@ export default function ChatWidget() {
               overflow: "hidden",
             }}
           >
-            <img src="/smew-logo.png" alt="SMEW" width={36} height={36} style={{ objectFit: "contain" }} />
+            <img
+              src="/smew-logo.png"
+              alt="SMEW"
+              width={36}
+              height={36}
+              style={{ objectFit: "contain" }}
+            />
           </div>
           <div style={{ flex: 1 }}>
             <div
@@ -548,14 +393,21 @@ export default function ChatWidget() {
               transition: "background 0.2s",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.2)";
+              (e.currentTarget as HTMLButtonElement).style.background =
+                "rgba(255,255,255,0.2)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.1)";
+              (e.currentTarget as HTMLButtonElement).style.background =
+                "rgba(255,255,255,0.1)";
             }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18M6 6l12 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+              <path
+                d="M18 6L6 18M6 6l12 12"
+                stroke="white"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </div>
@@ -617,16 +469,32 @@ export default function ChatWidget() {
                   border: msg.role === "bot" ? `1px solid ${BORDER}` : "none",
                   borderBottomLeftRadius: msg.role === "bot" ? 4 : 14,
                   borderBottomRightRadius: msg.role === "user" ? 4 : 14,
-                  boxShadow: msg.role === "bot" ? "0 2px 8px rgba(0,0,0,0.06)" : "none",
+                  boxShadow:
+                    msg.role === "bot" ? "0 2px 8px rgba(0,0,0,0.06)" : "none",
                 }}
               >
                 {msg.content}
+                {msg.role === "bot" &&
+                  msg.action?.action === "show_lead_form" &&
+                  visitorId && (
+                    <LeadForm
+                      visitorId={visitorId}
+                      service={msg.action.service}
+                      notes={msg.action.notes}
+                      location={msg.action.location}
+                      name={msg.action.name}
+                    />
+                  )}
+                {msg.role === "bot" &&
+                  msg.action?.action === "show_whatsapp" && (
+                    <WhatsAppButton url={msg.action.url} />
+                  )}
               </div>
             </div>
           ))}
 
           {/* Typing indicator */}
-          {loading && (
+          {loading && awaitingFirstToken && (
             <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
               <div
                 style={{
@@ -767,7 +635,8 @@ export default function ChatWidget() {
             }}
             onFocus={(e) => {
               e.currentTarget.style.borderColor = GOLD;
-              e.currentTarget.style.boxShadow = "0 0 0 3px rgba(184,134,11,0.1)";
+              e.currentTarget.style.boxShadow =
+                "0 0 0 3px rgba(184,134,11,0.1)";
             }}
             onBlur={(e) => {
               e.currentTarget.style.borderColor = BORDER;
@@ -793,10 +662,12 @@ export default function ChatWidget() {
             }}
             onMouseEnter={(e) => {
               if (input.trim() && !loading)
-                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)";
+                (e.currentTarget as HTMLButtonElement).style.transform =
+                  "scale(1.05)";
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+              (e.currentTarget as HTMLButtonElement).style.transform =
+                "scale(1)";
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
