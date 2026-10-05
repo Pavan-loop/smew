@@ -1,147 +1,109 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { apiFetch } from "../lib/chat-api";
+import { copy, type Language } from "../lib/chat-copy";
 
-const GOLD = "#b8860b";
-const DARK = "#0f0f0f";
-const BORDER = "#e4e0da";
-
-const CHAT_API = process.env.NEXT_PUBLIC_CHAT_API;
-const PHONE_RE = /^[6-9]\d{9}$/;
-
-type LeadFormProps = {
-  visitorId: string;
-  service?: string;
-  notes?: string;
-  location?: string;
-  name?: string;
-};
-
-export default function LeadForm({ visitorId, service, notes, location, name: initialName }: LeadFormProps) {
+type Props = { sessionToken: string; language: Language; onSaved: () => void };
+export default function LeadForm({ sessionToken, language, onSaved }: Props) {
+  const t = copy[language];
   const [phone, setPhone] = useState("");
-  const [name, setName] = useState(initialName ?? "");
+  const [name, setName] = useState("");
+  const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [confirmation, setConfirmation] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const requestId = useRef<string | null>(null);
+  const busy = useRef(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (submitting) return;
-    if (!PHONE_RE.test(phone)) {
-      setError("Enter a valid 10-digit mobile number.");
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (busy.current || !consent) return;
+    let digits = phone.replace(/\D/g, "");
+    if (digits.length === 12 && digits.startsWith("91"))
+      digits = digits.slice(2);
+    if (digits.length === 11 && digits.startsWith("0"))
+      digits = digits.slice(1);
+    if (!/^[6-9]\d{9}$/.test(digits) || digits === "9986464819") {
+      setError(t.invalid);
       return;
     }
-    setError(null);
+    busy.current = true;
     setSubmitting(true);
+    setError("");
+    requestId.current ??= crypto.randomUUID();
     try {
-      const res = await fetch(`${CHAT_API}/api/lead`, {
+      const response = await apiFetch("/lead", sessionToken, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-visitor-id": visitorId },
         body: JSON.stringify({
-          visitor_id: visitorId,
-          phone,
-          name: name.trim() || undefined,
-          service,
-          notes,
-          location,
+          request_id: requestId.current,
+          phone: digits,
+          name: name.trim() || null,
           consent: true,
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string };
-      if (!res.ok || !data.ok) throw new Error(data.message || "Something went wrong");
-      setConfirmation(data.message || "Thanks! We'll call you back shortly.");
+      if (!response.ok) {
+        if (response.status === 409) requestId.current = null;
+        throw new Error("Lead rejected");
+      }
+      const result = await response.json();
+      if (!result.ok) throw new Error("Lead was not saved");
+      setConfirmation(t.saved);
+      onSaved();
     } catch {
-      setError("Couldn't submit — please call us at 9986464819 instead.");
+      setError(t.submitError);
+    } finally {
+      busy.current = false;
+      setSubmitting(false);
     }
-    setSubmitting(false);
   }
-
-  if (confirmation) {
+  if (confirmation)
     return (
-      <div
-        style={{
-          marginTop: 10,
-          fontSize: 12.5,
-          color: DARK,
-          fontFamily: "DM Sans, sans-serif",
-          lineHeight: 1.5,
-        }}
-      >
+      <p className="smew-confirmation" role="status">
         ✓ {confirmation}
-      </div>
+      </p>
     );
-  }
-
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        marginTop: 10,
-        padding: 12,
-        borderRadius: 10,
-        border: `1px solid ${BORDER}`,
-        background: "#f8f7f4",
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-      }}
-    >
-      <input
-        type="tel"
-        inputMode="numeric"
-        placeholder="Your 10-digit mobile number"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-        disabled={submitting}
-        style={{
-          padding: "8px 12px",
-          borderRadius: 8,
-          border: `1.5px solid ${BORDER}`,
-          fontSize: 12.5,
-          fontFamily: "DM Sans, sans-serif",
-          color: DARK,
-          outline: "none",
-          background: "#fff",
-        }}
-      />
-      <input
-        type="text"
-        placeholder="Your name (optional)"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        disabled={submitting}
-        style={{
-          padding: "8px 12px",
-          borderRadius: 8,
-          border: `1.5px solid ${BORDER}`,
-          fontSize: 12.5,
-          fontFamily: "DM Sans, sans-serif",
-          color: DARK,
-          outline: "none",
-          background: "#fff",
-        }}
-      />
+    <form onSubmit={submit} className="smew-lead-form">
+      <label>
+        {t.phone}
+        <input
+          type="tel"
+          inputMode="tel"
+          autoComplete="tel"
+          maxLength={20}
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          disabled={submitting}
+          required
+        />
+      </label>
+      <label>
+        {t.name}
+        <input
+          autoComplete="name"
+          maxLength={100}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          disabled={submitting}
+        />
+      </label>
+      <label className="smew-consent">
+        <input
+          type="checkbox"
+          checked={consent}
+          onChange={(e) => setConsent(e.target.checked)}
+          disabled={submitting}
+          required
+        />
+        <span>{t.consent}</span>
+      </label>
       {error && (
-        <div style={{ fontSize: 11, color: "#c0392b", fontFamily: "DM Sans, sans-serif" }}>{error}</div>
+        <p className="smew-error" role="alert">
+          {error}
+        </p>
       )}
-      <div style={{ fontSize: 10.5, color: "#888", fontFamily: "DM Sans, sans-serif", lineHeight: 1.4 }}>
-        We&apos;ll save your number to call you back about this enquiry.
-      </div>
-      <button
-        type="submit"
-        disabled={submitting || phone.length !== 10}
-        style={{
-          padding: "8px 14px",
-          borderRadius: 20,
-          border: "none",
-          background: submitting || phone.length !== 10 ? BORDER : GOLD,
-          color: "#fff",
-          fontFamily: "Syne, sans-serif",
-          fontWeight: 700,
-          fontSize: 12,
-          cursor: submitting || phone.length !== 10 ? "not-allowed" : "pointer",
-        }}
-      >
-        {submitting ? "Submitting…" : "Request Callback"}
+      <button type="submit" disabled={!consent || submitting}>
+        {submitting ? t.submitting : t.submit}
       </button>
     </form>
   );

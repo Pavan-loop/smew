@@ -1,0 +1,257 @@
+.smew-admin {
+  min-height: 100dvh;
+  background: #f5f3ee;
+  color: #161616;
+  font-family: "DM Sans", sans-serif;
+  padding: 0 clamp(16px, 5vw, 80px) 40px;
+}
+.smew-admin * {
+  box-sizing: border-box;
+}
+.smew-admin header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 0;
+  border-bottom: 1px solid #ddd7cb;
+}
+.smew-admin header a {
+  font-family: "Syne", sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: #846006;
+}
+.smew-admin header button {
+  margin-left: auto;
+}
+.smew-admin h1 {
+  font-family: "Syne", sans-serif;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.15;
+  margin: 8px 0 12px;
+}
+.smew-admin p {
+  line-height: 1.6;
+  color: #555;
+}
+.smew-admin-kicker {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: #846006 !important;
+  font-weight: 700;
+}
+.smew-admin button {
+  border: 1px solid #d6cfbf;
+  border-radius: 7px;
+  padding: 9px 14px;
+  background: white;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.smew-admin button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.smew-admin button:focus-visible,
+.smew-admin input:focus-visible,
+.smew-admin select:focus-visible {
+  outline: 3px solid #c59d39;
+  outline-offset: 2px;
+}
+.smew-admin-login {
+  max-width: 500px;
+  margin: 12vh auto 6vh;
+}
+.smew-admin-login form {
+  display: grid;
+  gap: 10px;
+  margin: 24px 0 14px;
+}
+.smew-admin-login input {
+  padding: 12px;
+  border: 1px solid #d6cfbf;
+  border-radius: 7px;
+  background: white;
+}
+.smew-admin-login button {
+  color: white;
+  background: #161616;
+}
+.smew-admin small {
+  display: block;
+  color: #69645b;
+  font-size: 11px;
+  line-height: 1.5;
+  margin-top: 6px;
+}
+.smew-admin-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin: 34px 0 24px;
+}
+.smew-admin-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.smew-admin-stats article {
+  background: white;
+  border: 1px solid #ddd7cb;
+  border-radius: 12px;
+  padding: 20px;
+}
+.smew-admin-stats span {
+  display: block;
+  color: #69645b;
+  font-size: 12px;
+}
+.smew-admin-stats strong {
+  font-size: 35px;
+  display: block;
+  margin-top: 10px;
+}
+.smew-admin-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 24px 0;
+  font-size: 12px;
+}
+.smew-admin-tools span:nth-child(2) {
+  margin-right: auto;
+}
+.smew-admin-tools .healthy {
+  color: #286743;
+}
+.smew-admin-tools .unhealthy {
+  color: #993b25;
+}
+.smew-admin-list {
+  display: grid;
+  gap: 14px;
+}
+.smew-admin-lead {
+  background: white;
+  border: 1px solid #ddd7cb;
+  border-radius: 12px;
+  padding: 22px;
+}
+.smew-admin-lead-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+.smew-admin-lead h2 {
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+.smew-admin-lead a {
+  color: #846006;
+}
+.smew-admin-lead h3 {
+  margin: 18px 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.smew-admin-notes {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.smew-admin-lead .notification {
+  border-radius: 20px;
+  padding: 5px 10px;
+  font-size: 11px;
+  white-space: nowrap;
+  background: #f4ead0;
+}
+.smew-admin-lead .notification.sent {
+  background: #e4f1e8;
+  color: #286743;
+}
+.smew-admin-lead .notification.dead {
+  background: #fae7e0;
+  color: #993b25;
+}
+.smew-admin-lead-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0 12px;
+}
+.smew-admin select {
+  font: inherit;
+  font-size: 12px;
+  padding: 7px;
+  border-radius: 6px;
+  border: 1px solid #d6cfbf;
+  margin-left: 8px;
+  background: white;
+}
+.smew-admin .danger {
+  color: #993b25;
+  margin-left: auto;
+}
+.smew-admin-delivery-note {
+  font-size: 11px;
+}
+.smew-admin-empty {
+  padding: 48px 24px;
+  text-align: center;
+  background: white;
+  border: 1px dashed #c9c0ae;
+  border-radius: 12px;
+}
+.smew-admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 24px 0;
+  font-size: 12px;
+}
+.smew-admin-usage {
+  padding: 18px;
+  background: white;
+  border: 1px solid #ddd7cb;
+  border-radius: 9px;
+  font-size: 12px;
+}
+.smew-admin-usage summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.smew-admin-error {
+  border: 1px solid #d7afa1;
+  background: #fae7e0;
+  color: #84351f !important;
+  padding: 14px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+.smew-admin footer {
+  font-size: 11px;
+  color: #69645b;
+  margin-top: 30px;
+}
+@media (max-width: 640px) {
+  .smew-admin-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .smew-admin header span {
+    font-size: 12px;
+  }
+  .smew-admin-lead-top {
+    flex-direction: column;
+  }
+  .smew-admin-lead {
+    padding: 16px;
+  }
+}
