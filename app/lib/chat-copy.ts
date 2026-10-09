@@ -1,4 +1,7 @@
 export type Language = "en" | "kn" | "kanglish";
+// Typing-indicator status words; `default` applies to avatar variants without their own copy.
+const KN_TYPING = ["ಯೋಚಿಸುತ್ತಿದೆ…", "ಟೈಪ್ ಮಾಡುತ್ತಿದೆ…"] as const;
+const KANGLISH_TYPING = ["Yochistide…", "Type madta ide…"] as const;
 export const copy = {
   en: {
     greeting:
@@ -9,7 +12,18 @@ export const copy = {
     open: "Open chat assistant",
     title: "SMEW Assistant",
     status: "English · ಕನ್ನಡ · Kanglish",
-    waiting: "Preparing a reply…",
+    typing: "Assistant is typing",
+    typingSteps: {
+      default: ["Typing…"],
+      welder: ["Welding a reply…", "Typing…"],
+      "welder-at-work": ["Welding your answer…", "Typing…"],
+      torch: ["Heating up a reply…", "Typing…"],
+      grinder: ["Grinding out a reply…", "Typing…"],
+      "mask-expressive": ["Sparking an idea…", "Typing…"],
+      "weld-bead": ["Joining the pieces…", "Typing…"],
+      worker: ["Hammering out an answer…", "Typing…"],
+      gate: ["Shaping a reply…", "Typing…"],
+    },
     restart: "New chat",
     unavailable:
       "The assistant is temporarily unavailable. Call or WhatsApp Prashanth at 9986464819.",
@@ -43,7 +57,8 @@ export const copy = {
     open: "ಚಾಟ್ ಸಹಾಯಕ ತೆರೆಯಿರಿ",
     title: "SMEW ಸಹಾಯಕ",
     status: "English · ಕನ್ನಡ · Kanglish",
-    waiting: "ಉತ್ತರ ಸಿದ್ಧಪಡಿಸಲಾಗುತ್ತಿದೆ…",
+    typing: "ಸಹಾಯಕರು ಉತ್ತರ ಬರೆಯುತ್ತಿದ್ದಾರೆ",
+    typingSteps: { default: KN_TYPING },
     restart: "ಹೊಸ ಚಾಟ್",
     unavailable:
       "ಈಗ ಸಹಾಯಕ ಲಭ್ಯವಿಲ್ಲ. ಪ್ರಶಾಂತ್ ಅವರಿಗೆ 9986464819 ಸಂಖ್ಯೆಯಲ್ಲಿ ಕರೆ ಅಥವಾ WhatsApp ಮಾಡಬಹುದು.",
@@ -78,7 +93,8 @@ export const copy = {
     open: "Chat assistant open madi",
     title: "SMEW Assistant",
     status: "English · ಕನ್ನಡ · Kanglish",
-    waiting: "Reply ready madta idivi…",
+    typing: "Assistant type madta ide",
+    typingSteps: { default: KANGLISH_TYPING },
     restart: "Hosa chat",
     unavailable:
       "Iga assistant available illa. Prashanth avarige 9986464819 ge call athava WhatsApp madi.",

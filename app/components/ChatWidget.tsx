@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import LeadForm from "./LeadForm";
+import TypingIndicator from "./TypingIndicator";
 import { apiFetch, SESSION_KEY } from "../lib/chat-api";
 import { copy, type Language } from "../lib/chat-copy";
 import { readSSE } from "../lib/sse";
@@ -13,6 +14,11 @@ type Message = {
   action?: { action: "show_lead_form"; language?: Language } | null;
 };
 type Retry = { message: string; requestId: string };
+// Touch devices: avoid programmatic focus that would pop up the on-screen keyboard.
+const coarsePointer = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia?.("(pointer: coarse)").matches;
+
 export default function ChatWidget() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -28,6 +34,7 @@ export default function ChatWidget() {
   const tokenRef = useRef<string | null>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const busy = useRef(false);
+  const refocusInput = useRef(false);
   const controllerRef = useRef<AbortController | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -108,14 +115,24 @@ export default function ChatWidget() {
     });
   }, [messages, loading]);
   useEffect(() => {
-    if (open) inputRef.current?.focus();
-  }, [open]);
+    if (open && ready && !coarsePointer()) inputRef.current?.focus();
+  }, [open, ready]);
+  // Return focus to the input once a reply finishes, so the user can type straight away.
+  useEffect(() => {
+    if (!open) refocusInput.current = false;
+    if (!open || !ready || loading || !refocusInput.current) return;
+    refocusInput.current = false;
+    inputRef.current?.focus({ preventScroll: true });
+  }, [open, ready, loading]);
   useEffect(() => () => controllerRef.current?.abort(), []);
 
   async function send(preset?: string, previous?: Retry) {
     const message = (previous?.message ?? preset ?? input).trim();
     if (!message || busy.current || !ready || !tokenRef.current) return;
     busy.current = true;
+    // Refocus after the reply if the user was typing, or on desktop after a chip/retry click.
+    refocusInput.current =
+      document.activeElement === inputRef.current || !coarsePointer();
     setLoading(true);
     setError("");
     setRetry(null);
@@ -281,31 +298,34 @@ export default function ChatWidget() {
             {!messages.length && (
               <div className="smew-message assistant">{t.greeting}</div>
             )}
-            {messages.map((message, index) => (
-              <div key={index} className={`smew-message ${message.role}`}>
-                {message.content ||
-                  (loading && index === messages.length - 1 ? (
-                    <span role="status">{t.waiting}</span>
-                  ) : (
-                    ""
-                  ))}
-                {message.action?.action === "show_lead_form" &&
-                  sessionToken &&
-                  !leadSaved && (
-                    <LeadForm
-                      sessionToken={sessionToken}
-                      language={language}
-                      onSaved={() => {
-                        setLeadSaved(true);
-                        setMessages((old) => [
-                          ...old,
-                          { role: "assistant", content: t.saved },
-                        ]);
-                      }}
-                    />
-                  )}
-              </div>
-            ))}
+            {messages.map((message, index) =>
+              loading && index === messages.length - 1 && !message.content ? (
+                <TypingIndicator
+                  key={index}
+                  label={t.typing}
+                  steps={t.typingSteps}
+                />
+              ) : (
+                <div key={index} className={`smew-message ${message.role}`}>
+                  {message.content}
+                  {message.action?.action === "show_lead_form" &&
+                    sessionToken &&
+                    !leadSaved && (
+                      <LeadForm
+                        sessionToken={sessionToken}
+                        language={language}
+                        onSaved={() => {
+                          setLeadSaved(true);
+                          setMessages((old) => [
+                            ...old,
+                            { role: "assistant", content: t.saved },
+                          ]);
+                        }}
+                      />
+                    )}
+                </div>
+              ),
+            )}
             {retry && !loading && (
               <button
                 className="smew-chat-retry"
@@ -348,12 +368,16 @@ export default function ChatWidget() {
               maxLength={500}
               aria-label={t.placeholder}
               placeholder={t.placeholder}
-              disabled={!ready || loading}
+              // Stay enabled while a reply loads: disabling drops focus (and the mobile keyboard).
+              // send() ignores submits until the current reply is done.
+              disabled={!ready}
             />
             <button
               type="submit"
               aria-label={t.send}
               disabled={!input.trim() || !ready || loading}
+              // Keep focus in the input when the send button is clicked or tapped.
+              onMouseDown={(e) => e.preventDefault()}
             >
               ➤
             </button>
