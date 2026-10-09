@@ -37,6 +37,8 @@ export const copy = {
     submitting: "Saving…",
     invalid: "Enter a valid Indian mobile number.",
     submitError: "Couldn't save your request. Try again or call 9986464819.",
+    continueChat:
+      "Please continue the chat a little more. The callback form opens once we have your details.",
     saved:
       "Your callback request is saved. Prashanth will confirm availability.",
     privacy:
@@ -73,6 +75,8 @@ export const copy = {
     invalid: "ಸರಿಯಾದ ಭಾರತೀಯ ಮೊಬೈಲ್ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ.",
     submitError:
       "ವಿನಂತಿ ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ ಅಥವಾ 9986464819 ಗೆ ಕರೆ ಮಾಡಿ.",
+    continueChat:
+      "ದಯವಿಟ್ಟು ಇನ್ನೂ ಸ್ವಲ್ಪ ಚಾಟ್ ಮುಂದುವರಿಸಿ. ನಿಮ್ಮ ವಿವರಗಳು ಸಿಕ್ಕ ನಂತರ ಕರೆ ವಿನಂತಿ ಫಾರ್ಮ್ ತೆರೆಯುತ್ತದೆ.",
     saved:
       "ನಿಮ್ಮ ಕರೆ ವಿನಂತಿಯನ್ನು ಉಳಿಸಲಾಗಿದೆ. ಪ್ರಶಾಂತ್ ಅವರು ಲಭ್ಯತೆಯನ್ನು ಖಚಿತಪಡಿಸುತ್ತಾರೆ.",
     privacy:
@@ -109,6 +113,8 @@ export const copy = {
     invalid: "Valid Indian mobile number enter madi.",
     submitError:
       "Request save aagilla. Matte try madi athava 9986464819 ge call madi.",
+    continueChat:
+      "Swalpa innu chat continue madi. Nimma details sikkida mele callback form open aagutte.",
     saved:
       "Nimma callback request save aagide. Prashanth avaru availability confirm madtare.",
     privacy:

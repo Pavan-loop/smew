@@ -42,7 +42,18 @@ export default function LeadForm({ sessionToken, language, onSaved }: Props) {
         }),
       });
       if (!response.ok) {
-        if (response.status === 409) requestId.current = null;
+        if (response.status === 409) {
+          requestId.current = null;
+          // The server only accepts callbacks once the chat has offered the form.
+          const detail = await response
+            .json()
+            .then((body) => String(body?.detail ?? ""))
+            .catch(() => "");
+          if (detail.includes("callback form")) {
+            setError(t.continueChat);
+            return;
+          }
+        }
         throw new Error("Lead rejected");
       }
       const result = await response.json();
