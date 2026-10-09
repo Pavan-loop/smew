@@ -53,8 +53,9 @@ export default function ChatWidget() {
   const tokenRef = useRef<string | null>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const busy = useRef(false);
-  // A message sent while the session is still connecting goes out as soon as it is ready.
-  const queuedRef = useRef<string | null>(null);
+  // Messages sent while the session is still connecting: shown at once as pending bubbles and sent
+  // (as one message) as soon as the session is ready.
+  const queuedRef = useRef<string[]>([]);
   // Messages typed while the bot is replying (Enter used to be ignored and the text was lost).
   const pendingRef = useRef<string[]>([]);
   const [flushTick, setFlushTick] = useState(0);
@@ -111,7 +112,10 @@ export default function ChatWidget() {
           });
           const limit = await rateLimitOf(response);
           if (limit) {
-            if (!cancelled) setError(limit);
+            if (!cancelled) {
+              setError(limit);
+              returnConnectQueue();
+            }
             return;
           }
           if (response.ok) {
@@ -119,7 +123,11 @@ export default function ChatWidget() {
             if (cancelled) return;
             tokenRef.current = stored;
             setSessionToken(stored);
-            setMessages(data.messages);
+            // Keep anything typed while connecting after the restored history.
+            setMessages((old) => [
+              ...data.messages,
+              ...old.filter((m: Message) => m.role === "user" && m.queued),
+            ]);
             if (["en", "kn", "kanglish"].includes(data.language))
               setLanguage(data.language);
             setLeadSaved(data.lead_captured);
@@ -140,7 +148,10 @@ export default function ChatWidget() {
         });
         const limit = await rateLimitOf(response);
         if (limit) {
-          if (!cancelled) setError(limit);
+          if (!cancelled) {
+            setError(limit);
+            returnConnectQueue();
+          }
           return;
         }
         if (!response.ok) throw new Error("Session unavailable");
@@ -156,7 +167,10 @@ export default function ChatWidget() {
         setReady(true);
         setError("");
       } catch {
-        if (!cancelled) setError("unavailable");
+        if (!cancelled) {
+          setError("unavailable");
+          returnConnectQueue();
+        }
       } finally {
         clearTimeout(initializationTimeout);
       }
@@ -187,10 +201,11 @@ export default function ChatWidget() {
   }, [open, ready, loading]);
   useEffect(() => () => controllerRef.current?.abort(), []);
   useEffect(() => {
-    if (!ready || !queuedRef.current) return;
-    const message = queuedRef.current;
-    queuedRef.current = null;
-    void send(message);
+    if (!ready || !queuedRef.current.length) return;
+    const queued = queuedRef.current;
+    queuedRef.current = [];
+    // The pending bubbles are already on screen: send without adding them again.
+    void send(queued.join("\n").slice(0, 500), undefined, queued.length);
     // send() is recreated every render; only the transition to ready matters here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
@@ -205,6 +220,15 @@ export default function ChatWidget() {
     // send() is recreated every render; only a finished reply matters here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flushTick]);
+
+  // Connecting failed: the pending bubbles go back into the input so nothing is lost or sent unseen.
+  function returnConnectQueue() {
+    const queued = queuedRef.current;
+    queuedRef.current = [];
+    if (!queued.length) return;
+    setMessages((old) => old.filter((m) => !(m.role === "user" && m.queued)));
+    setInput((current) => [...queued, current].filter(Boolean).join(" ").slice(0, 500));
+  }
 
   // A failed reply puts any queued text back into the input (nothing is sent behind the user's back).
   function restoreQueued(current?: string) {
@@ -236,14 +260,24 @@ export default function ChatWidget() {
       return;
     }
     if (!ready || !tokenRef.current) {
-      // Still connecting: keep the text visible and send it once the session is ready.
-      queuedRef.current = message;
+      // Still connecting: show it now as a pending bubble and send it once the session is ready.
+      if (previous) return;
+      queuedRef.current.push(message);
+      setInput("");
+      setMessages((old) => [
+        ...old,
+        {
+          role: "user",
+          content: message,
+          language: scriptLanguage(message),
+          queued: true,
+        },
+      ]);
       if (error) {
         // Connecting failed earlier (e.g. 429): resending retries the session, then sends this message.
         setError("");
         setSessionAttempt((attempt) => attempt + 1);
       }
-      if (preset) setInput(preset);
       return;
     }
     busy.current = true;
@@ -364,6 +398,8 @@ export default function ChatWidget() {
     } catch {
       /* no storage */
     }
+    // Pending messages belong to the old chat; anything typed after this goes to the new session.
+    queuedRef.current = [];
     setMessages([]);
     setLanguage("en");
     setLeadSaved(false);
