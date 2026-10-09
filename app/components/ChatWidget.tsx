@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import LeadForm from "./LeadForm";
 import TypingIndicator from "./TypingIndicator";
-import { API_BASE, apiFetch, SESSION_KEY } from "../lib/chat-api";
+import { API_BASE, apiFetch, LANGUAGE_KEY, SESSION_KEY } from "../lib/chat-api";
 import { copy, type Language } from "../lib/chat-copy";
 import { readSSE } from "../lib/sse";
 import "./chat.css";
@@ -24,6 +24,8 @@ export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  // The visitor's explicit choice (or English): drives the widget copy and is sent with each message.
+  // Replies follow each message's own language on the server, so a Kanglish reply never switches this.
   const [language, setLanguage] = useState<Language>("en");
   const [ready, setReady] = useState(false);
   // Set on hover/focus of the chat button or when a saved chat exists, so the session is ready before opening.
@@ -82,6 +84,9 @@ export default function ChatWidget() {
         let stored: string | null = null;
         try {
           stored = localStorage.getItem(SESSION_KEY);
+          const choice = localStorage.getItem(LANGUAGE_KEY);
+          if (choice === "en" || choice === "kn" || choice === "kanglish")
+            setLanguage(choice);
         } catch {
           /* storage may be unavailable */
         }
@@ -96,8 +101,6 @@ export default function ChatWidget() {
             setSessionToken(stored);
             setMessages(data.messages);
             setLeadSaved(data.lead_captured);
-            if (["en", "kn", "kanglish"].includes(data.language))
-              setLanguage(data.language);
             setReady(true);
             setError("");
             return;
@@ -226,7 +229,6 @@ export default function ChatWidget() {
         if (event.type === "text") {
           reply += event.text;
           update({ content: reply });
-          if (event.language) setLanguage(event.language);
         } else if (event.type === "action") update({ action: event });
         else if (event.type === "error") {
           serverError = true;
@@ -334,7 +336,15 @@ export default function ChatWidget() {
             <select
               id="smew-language"
               value={language}
-              onChange={(e) => setLanguage(e.target.value as Language)}
+              onChange={(e) => {
+                const choice = e.target.value as Language;
+                setLanguage(choice);
+                try {
+                  localStorage.setItem(LANGUAGE_KEY, choice);
+                } catch {
+                  /* choice stays for this page view */
+                }
+              }}
               disabled={loading}
             >
               <option value="en">English</option>
