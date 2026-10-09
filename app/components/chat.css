@@ -1339,3 +1339,8 @@
     opacity: 0.45;
   }
 }
+
+/* Typed while the bot was replying; sent right after the reply. */
+.smew-message.queued {
+  opacity: 0.7;
+}

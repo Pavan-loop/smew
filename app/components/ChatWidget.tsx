@@ -20,6 +20,8 @@ type Message = {
   action?: { action: "show_lead_form"; language?: Language } | null;
   // The server-detected language of a reply; user messages get a script-based guess.
   language?: Language;
+  // Typed while a reply was still coming in: shown at once, sent right after that reply.
+  queued?: boolean;
 };
 type Retry = { message: string; requestId: string };
 // Touch devices: avoid programmatic focus that would pop up the on-screen keyboard.
@@ -53,6 +55,9 @@ export default function ChatWidget() {
   const busy = useRef(false);
   // A message sent while the session is still connecting goes out as soon as it is ready.
   const queuedRef = useRef<string | null>(null);
+  // Messages typed while the bot is replying (Enter used to be ignored and the text was lost).
+  const pendingRef = useRef<string[]>([]);
+  const [flushTick, setFlushTick] = useState(0);
   const refocusInput = useRef(false);
   const controllerRef = useRef<AbortController | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -190,9 +195,46 @@ export default function ChatWidget() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
-  async function send(preset?: string, previous?: Retry) {
+  // After a reply finishes, send what was typed meanwhile as one message.
+  useEffect(() => {
+    if (!flushTick || busy.current || !pendingRef.current.length) return;
+    const message = pendingRef.current.join("\n").slice(0, 500);
+    const count = pendingRef.current.length;
+    pendingRef.current = [];
+    void send(message, undefined, count);
+    // send() is recreated every render; only a finished reply matters here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flushTick]);
+
+  // A failed reply puts any queued text back into the input (nothing is sent behind the user's back).
+  function restoreQueued(current?: string) {
+    const queued = pendingRef.current;
+    pendingRef.current = [];
+    if (queued.length)
+      setMessages((old) => old.filter((m) => !(m.role === "user" && m.queued)));
+    const text = [current, ...queued].filter(Boolean).join(" ");
+    if (text) setInput(text.slice(0, 500));
+  }
+
+  // `shown`: how many queued bubbles this message stands for (they are already on screen).
+  async function send(preset?: string, previous?: Retry, shown = 0) {
     const message = (previous?.message ?? preset ?? input).trim();
-    if (!message || busy.current) return;
+    if (!message) return;
+    if (busy.current) {
+      if (previous || preset) return;
+      pendingRef.current.push(message);
+      setInput("");
+      setMessages((old) => [
+        ...old,
+        {
+          role: "user",
+          content: message,
+          language: scriptLanguage(message),
+          queued: true,
+        },
+      ]);
+      return;
+    }
     if (!ready || !tokenRef.current) {
       // Still connecting: keep the text visible and send it once the session is ready.
       queuedRef.current = message;
@@ -213,8 +255,18 @@ export default function ChatWidget() {
     setRetry(null);
     setInput("");
     const requestId = previous?.requestId ?? crypto.randomUUID();
-    const index = previous ? messages.length - 1 : messages.length + 1;
-    if (previous)
+    const index = previous
+      ? messages.length - 1
+      : shown
+        ? messages.length
+        : messages.length + 1;
+    if (shown)
+      // The queued bubbles are already on screen; only the reply placeholder is added.
+      setMessages((old) => [
+        ...old.map((m) => (m.queued ? { ...m, queued: false } : m)),
+        { role: "assistant", content: "" },
+      ]);
+    else if (previous)
       setMessages((old) =>
         old.map((m, i) =>
           i === index ? { role: "assistant", content: "" } : m,
@@ -258,9 +310,11 @@ export default function ChatWidget() {
         setMessages((old) =>
           previous
             ? old.map((m, i) => (i === index ? note : m))
-            : [...old.slice(0, index - 1), note],
+            : shown
+              ? [...old.slice(0, index - shown), note, ...old.slice(index + 1)]
+              : [...old.slice(0, index - 1), note, ...old.slice(index + 1)],
         );
-        setInput(message);
+        restoreQueued(message);
         refocusInput.current = true;
         return;
       }
@@ -282,20 +336,26 @@ export default function ChatWidget() {
         }
       });
       // A completed provider error needs a NEW request ID; the old one replays its result.
-      if (serverError) setRetry({ message, requestId: crypto.randomUUID() });
+      if (serverError) {
+        setRetry({ message, requestId: crypto.randomUUID() });
+        restoreQueued();
+      }
     } catch {
       update({ content: t.unavailable, action: null });
       setRetry({ message, requestId });
+      restoreQueued();
     } finally {
       clearTimeout(timeout);
       controllerRef.current = null;
       busy.current = false;
       setLoading(false);
+      setFlushTick((tick) => tick + 1);
     }
   }
 
   function restart() {
     if (busy.current) return;
+    pendingRef.current = [];
     if (messages.length && !window.confirm(t.confirmRestart)) return;
     tokenRef.current = null;
     setSessionToken(null);
@@ -389,7 +449,7 @@ export default function ChatWidget() {
               </p>
             )}
             {messages.map((message, index) =>
-              loading && index === messages.length - 1 && !message.content ? (
+              loading && message.role === "assistant" && !message.content ? (
                 <TypingIndicator
                   key={index}
                   label={t.typing}
@@ -398,7 +458,7 @@ export default function ChatWidget() {
               ) : (
                 <div
                   key={index}
-                  className={`smew-message ${message.role}`}
+                  className={`smew-message ${message.role}${message.queued ? " queued" : ""}`}
                   lang={
                     message.language
                       ? htmlLang(message.language)
@@ -468,12 +528,12 @@ export default function ChatWidget() {
               aria-label={t.placeholder}
               placeholder={t.placeholder}
               // Always enabled (also while connecting): disabling drops focus (and the mobile keyboard)
-              // and looked broken. send() queues or ignores submits until the session/reply is ready.
+              // and looked broken. send() queues submits until the session/reply is ready.
             />
             <button
               type="submit"
               aria-label={t.send}
-              disabled={!input.trim() || loading}
+              disabled={!input.trim()}
               // Keep focus in the input when the send button is clicked or tapped.
               onMouseDown={(e) => e.preventDefault()}
             >
