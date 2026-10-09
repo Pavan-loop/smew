@@ -12,6 +12,7 @@ export const copy = {
     open: "Open chat assistant",
     title: "SMEW Assistant",
     status: "English · ಕನ್ನಡ · Kanglish",
+    connecting: "Connecting… you can start typing.",
     typing: "Assistant is typing",
     typingSteps: {
       default: ["Typing…"],
@@ -59,6 +60,7 @@ export const copy = {
     open: "ಚಾಟ್ ಸಹಾಯಕ ತೆರೆಯಿರಿ",
     title: "SMEW ಸಹಾಯಕ",
     status: "English · ಕನ್ನಡ · Kanglish",
+    connecting: "ಸಂಪರ್ಕಿಸಲಾಗುತ್ತಿದೆ… ನೀವು ಟೈಪ್ ಮಾಡಲು ಪ್ರಾರಂಭಿಸಬಹುದು.",
     typing: "ಸಹಾಯಕರು ಉತ್ತರ ಬರೆಯುತ್ತಿದ್ದಾರೆ",
     typingSteps: { default: KN_TYPING },
     restart: "ಹೊಸ ಚಾಟ್",
@@ -97,6 +99,7 @@ export const copy = {
     open: "Chat assistant open madi",
     title: "SMEW Assistant",
     status: "English · ಕನ್ನಡ · Kanglish",
+    connecting: "Connect aagta ide… neevu type madoke shuru madabahudu.",
     typing: "Assistant type madta ide",
     typingSteps: { default: KANGLISH_TYPING },
     restart: "Hosa chat",

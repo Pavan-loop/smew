@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import LeadForm from "./LeadForm";
 import TypingIndicator from "./TypingIndicator";
-import { apiFetch, SESSION_KEY } from "../lib/chat-api";
+import { API_BASE, apiFetch, SESSION_KEY } from "../lib/chat-api";
 import { copy, type Language } from "../lib/chat-copy";
 import { readSSE } from "../lib/sse";
 import "./chat.css";
@@ -26,6 +26,8 @@ export default function ChatWidget() {
   const [input, setInput] = useState("");
   const [language, setLanguage] = useState<Language>("en");
   const [ready, setReady] = useState(false);
+  // Set on hover/focus of the chat button or when a saved chat exists, so the session is ready before opening.
+  const [warm, setWarm] = useState(false);
   const [sessionAttempt, setSessionAttempt] = useState(0);
   const [loading, setLoading] = useState(false);
   const [leadSaved, setLeadSaved] = useState(false);
@@ -34,15 +36,44 @@ export default function ChatWidget() {
   const tokenRef = useRef<string | null>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const busy = useRef(false);
+  // A message sent while the session is still connecting goes out as soon as it is ready.
+  const queuedRef = useRef<string | null>(null);
   const refocusInput = useRef(false);
   const controllerRef = useRef<AbortController | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const t = copy[language];
   const hidden = pathname.startsWith("/admin");
+  const wanted = open || warm;
+
+  // Pre-warm when the browser is idle: restore a saved chat (no new session), otherwise just wake the API.
+  // New sessions are only created on hover/focus/open, so page views do not use up the daily session quota.
+  useEffect(() => {
+    if (hidden) return;
+    const run = () => {
+      let stored: string | null = null;
+      try {
+        stored = localStorage.getItem(SESSION_KEY);
+      } catch {
+        /* storage may be unavailable */
+      }
+      if (stored) setWarm(true);
+      else
+        void fetch(`${API_BASE}/healthz`, {
+          cache: "no-store",
+          credentials: "omit",
+        }).catch(() => undefined);
+    };
+    if ("requestIdleCallback" in window) {
+      const id = window.requestIdleCallback(run, { timeout: 4000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = setTimeout(run, 2000);
+    return () => clearTimeout(id);
+  }, [hidden]);
 
   useEffect(() => {
-    if (!open || ready || hidden) return;
+    if (!wanted || ready || hidden) return;
     let cancelled = false;
     const controller = new AbortController();
     const initializationTimeout = setTimeout(() => controller.abort(), 20000);
@@ -106,7 +137,7 @@ export default function ChatWidget() {
       clearTimeout(initializationTimeout);
       controller.abort();
     };
-  }, [open, ready, hidden, sessionAttempt]);
+  }, [wanted, ready, hidden, sessionAttempt]);
 
   useEffect(() => {
     listRef.current?.scrollTo({
@@ -125,10 +156,24 @@ export default function ChatWidget() {
     inputRef.current?.focus({ preventScroll: true });
   }, [open, ready, loading]);
   useEffect(() => () => controllerRef.current?.abort(), []);
+  useEffect(() => {
+    if (!ready || !queuedRef.current) return;
+    const message = queuedRef.current;
+    queuedRef.current = null;
+    void send(message);
+    // send() is recreated every render; only the transition to ready matters here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
 
   async function send(preset?: string, previous?: Retry) {
     const message = (previous?.message ?? preset ?? input).trim();
-    if (!message || busy.current || !ready || !tokenRef.current) return;
+    if (!message || busy.current) return;
+    if (!ready || !tokenRef.current) {
+      // Still connecting: keep the text visible and send it once the session is ready.
+      queuedRef.current = message;
+      if (preset) setInput(preset);
+      return;
+    }
     busy.current = true;
     // Refocus after the reply if the user was typing, or on desktop after a chip/retry click.
     refocusInput.current =
@@ -232,7 +277,16 @@ export default function ChatWidget() {
     <div className="smew-chat-root">
       <button
         className="smew-chat-toggle"
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          if (!open && error && !ready) {
+            setError("");
+            setSessionAttempt((attempt) => attempt + 1);
+          }
+          setOpen(!open);
+        }}
+        onPointerEnter={() => setWarm(true)}
+        onFocus={() => setWarm(true)}
+        onTouchStart={() => setWarm(true)}
         aria-label={open ? t.close : t.open}
         aria-expanded={open}
         aria-controls="smew-chat-panel"
@@ -295,8 +349,12 @@ export default function ChatWidget() {
             aria-live="polite"
             aria-relevant="additions text"
           >
-            {!messages.length && (
-              <div className="smew-message assistant">{t.greeting}</div>
+            {/* The greeting stays as the first bubble (it used to vanish after the first message). */}
+            <div className="smew-message assistant">{t.greeting}</div>
+            {open && !ready && !error && (
+              <p className="smew-chat-connecting" role="status">
+                {t.connecting}
+              </p>
             )}
             {messages.map((message, index) =>
               loading && index === messages.length - 1 && !message.content ? (
@@ -347,7 +405,7 @@ export default function ChatWidget() {
                 <button
                   key={chip}
                   onClick={() => void send(chip)}
-                  disabled={!ready || loading}
+                  disabled={loading}
                 >
                   {chip}
                 </button>
@@ -368,14 +426,13 @@ export default function ChatWidget() {
               maxLength={500}
               aria-label={t.placeholder}
               placeholder={t.placeholder}
-              // Stay enabled while a reply loads: disabling drops focus (and the mobile keyboard).
-              // send() ignores submits until the current reply is done.
-              disabled={!ready}
+              // Always enabled (also while connecting): disabling drops focus (and the mobile keyboard)
+              // and looked broken. send() queues or ignores submits until the session/reply is ready.
             />
             <button
               type="submit"
               aria-label={t.send}
-              disabled={!input.trim() || !ready || loading}
+              disabled={!input.trim() || loading}
               // Keep focus in the input when the send button is clicked or tapped.
               onMouseDown={(e) => e.preventDefault()}
             >
