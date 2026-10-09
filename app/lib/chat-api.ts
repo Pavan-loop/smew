@@ -22,6 +22,23 @@ export async function apiFetch(
   });
 }
 
+export type RateLimit = "rateLimited" | "dailyLimit";
+
+/** Why a request got 429: the backend's JSON `reason`, else Retry-After (over an hour means a daily cap). */
+export async function rateLimitOf(
+  response: Response,
+): Promise<RateLimit | null> {
+  if (response.status !== 429) return null;
+  const body = await response
+    .clone()
+    .json()
+    .catch(() => ({}));
+  if (body?.reason === "daily_limit") return "dailyLimit";
+  if (body?.reason === "rate_limited") return "rateLimited";
+  const retryAfter = Number(response.headers.get("Retry-After"));
+  return retryAfter > 3600 ? "dailyLimit" : "rateLimited";
+}
+
 export async function responseError(response: Response): Promise<string> {
   const data = await response.json().catch(() => ({}));
   if (typeof data.detail === "string") return data.detail;

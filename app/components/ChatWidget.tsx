@@ -3,7 +3,14 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import LeadForm from "./LeadForm";
 import TypingIndicator from "./TypingIndicator";
-import { API_BASE, apiFetch, LANGUAGE_KEY, SESSION_KEY } from "../lib/chat-api";
+import {
+  API_BASE,
+  apiFetch,
+  LANGUAGE_KEY,
+  rateLimitOf,
+  SESSION_KEY,
+  type RateLimit,
+} from "../lib/chat-api";
 import { copy, type Language } from "../lib/chat-copy";
 import { readSSE } from "../lib/sse";
 import "./chat.css";
@@ -33,7 +40,8 @@ export default function ChatWidget() {
   const [sessionAttempt, setSessionAttempt] = useState(0);
   const [loading, setLoading] = useState(false);
   const [leadSaved, setLeadSaved] = useState(false);
-  const [error, setError] = useState("");
+  // A copy key, so the note is shown in the current language.
+  const [error, setError] = useState<"" | "unavailable" | RateLimit>("");
   const [retry, setRetry] = useState<Retry | null>(null);
   const tokenRef = useRef<string | null>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
@@ -94,6 +102,11 @@ export default function ChatWidget() {
           const response = await apiFetch("/session", stored, {
             signal: controller.signal,
           });
+          const limit = await rateLimitOf(response);
+          if (limit) {
+            if (!cancelled) setError(limit);
+            return;
+          }
           if (response.ok) {
             const data = await response.json();
             if (cancelled) return;
@@ -116,6 +129,11 @@ export default function ChatWidget() {
           method: "POST",
           signal: controller.signal,
         });
+        const limit = await rateLimitOf(response);
+        if (limit) {
+          if (!cancelled) setError(limit);
+          return;
+        }
         if (!response.ok) throw new Error("Session unavailable");
         const data = await response.json();
         if (cancelled) return;
@@ -129,7 +147,7 @@ export default function ChatWidget() {
         setReady(true);
         setError("");
       } catch {
-        if (!cancelled) setError(copy.en.unavailable);
+        if (!cancelled) setError("unavailable");
       } finally {
         clearTimeout(initializationTimeout);
       }
@@ -174,6 +192,11 @@ export default function ChatWidget() {
     if (!ready || !tokenRef.current) {
       // Still connecting: keep the text visible and send it once the session is ready.
       queuedRef.current = message;
+      if (error) {
+        // Connecting failed earlier (e.g. 429): resending retries the session, then sends this message.
+        setError("");
+        setSessionAttempt((attempt) => attempt + 1);
+      }
       if (preset) setInput(preset);
       return;
     }
@@ -223,6 +246,19 @@ export default function ChatWidget() {
           /* no storage */
         }
         throw new Error("Session expired");
+      }
+      const limit = await rateLimitOf(response);
+      if (limit) {
+        // A friendly note instead of a silent failure; the message goes back into the input to resend.
+        const note: Message = { role: "assistant", content: t[limit] };
+        setMessages((old) =>
+          previous
+            ? old.map((m, i) => (i === index ? note : m))
+            : [...old.slice(0, index - 1), note],
+        );
+        setInput(message);
+        refocusInput.current = true;
+        return;
       }
       if (!response.ok || !response.body) throw new Error("Chat unavailable");
       await readSSE(response.body, (event) => {
@@ -405,7 +441,7 @@ export default function ChatWidget() {
             )}
             {error && (
               <p role="alert" className="smew-error">
-                {error}
+                {t[error]}
               </p>
             )}
           </div>

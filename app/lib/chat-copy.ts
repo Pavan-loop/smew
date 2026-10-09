@@ -28,6 +28,10 @@ export const copy = {
     restart: "New chat",
     unavailable:
       "The assistant is temporarily unavailable. Call or WhatsApp Prashanth at 9986464819.",
+    rateLimited:
+      "You're sending messages a bit fast. Please try again in a minute.",
+    dailyLimit:
+      "Our chat is busy today. Please call or WhatsApp Prashanth at 9986464819.",
     retry: "Retry message",
     busy: "Please wait for the current reply.",
     consent:
@@ -66,6 +70,10 @@ export const copy = {
     restart: "ಹೊಸ ಚಾಟ್",
     unavailable:
       "ಈಗ ಸಹಾಯಕ ಲಭ್ಯವಿಲ್ಲ. ಪ್ರಶಾಂತ್ ಅವರಿಗೆ 9986464819 ಸಂಖ್ಯೆಯಲ್ಲಿ ಕರೆ ಅಥವಾ WhatsApp ಮಾಡಬಹುದು.",
+    rateLimited:
+      "ನೀವು ಸ್ವಲ್ಪ ವೇಗವಾಗಿ ಸಂದೇಶ ಕಳುಹಿಸುತ್ತಿದ್ದೀರಿ. ದಯವಿಟ್ಟು ಒಂದು ನಿಮಿಷದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    dailyLimit:
+      "ಇಂದು ನಮ್ಮ ಚಾಟ್ ತುಂಬಾ ಬ್ಯುಸಿಯಾಗಿದೆ. ದಯವಿಟ್ಟು ಪ್ರಶಾಂತ್ ಅವರಿಗೆ 9986464819 ಗೆ ಕರೆ ಅಥವಾ WhatsApp ಮಾಡಿ.",
     retry: "ಮತ್ತೆ ಕಳುಹಿಸಿ",
     busy: "ಪ್ರಸ್ತುತ ಉತ್ತರಕ್ಕಾಗಿ ಕಾಯಿರಿ.",
     consent:
@@ -105,6 +113,10 @@ export const copy = {
     restart: "Hosa chat",
     unavailable:
       "Iga assistant available illa. Prashanth avarige 9986464819 ge call athava WhatsApp madi.",
+    rateLimited:
+      "Neevu swalpa fast aagi message kalistidira. Ondu nimisha bittu matte try madi.",
+    dailyLimit:
+      "Ivattu namma chat thumba busy ide. Prashanth avarige 9986464819 ge call athava WhatsApp madi.",
     retry: "Matte kalisi",
     busy: "Current reply barovaregu kayiri.",
     consent:

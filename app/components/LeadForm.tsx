@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import { apiFetch } from "../lib/chat-api";
+import { apiFetch, rateLimitOf } from "../lib/chat-api";
 import { copy, type Language } from "../lib/chat-copy";
 
 type Props = { sessionToken: string; language: Language; onSaved: () => void };
@@ -41,6 +41,12 @@ export default function LeadForm({ sessionToken, language, onSaved }: Props) {
           consent: true,
         }),
       });
+      const limit = await rateLimitOf(response);
+      if (limit) {
+        // Keep the typed number and request ID so the same request can be resent after the wait.
+        setError(t[limit]);
+        return;
+      }
       if (!response.ok) {
         if (response.status === 409) {
           requestId.current = null;
