@@ -26,6 +26,8 @@ export const copy = {
       gate: ["Shaping a reply…", "Typing…"],
     },
     restart: "New chat",
+    confirmRestart: "Start a new conversation?",
+    languageHint: "You can chat in English, ಕನ್ನಡ or Kanglish.",
     unavailable:
       "The assistant is temporarily unavailable. Call or WhatsApp Prashanth at 9986464819.",
     rateLimited:
@@ -68,6 +70,8 @@ export const copy = {
     typing: "ಸಹಾಯಕರು ಉತ್ತರ ಬರೆಯುತ್ತಿದ್ದಾರೆ",
     typingSteps: { default: KN_TYPING },
     restart: "ಹೊಸ ಚಾಟ್",
+    confirmRestart: "ಹೊಸ ಚಾಟ್ ಪ್ರಾರಂಭಿಸಬೇಕೇ?",
+    languageHint: "ನೀವು English, ಕನ್ನಡ ಅಥವಾ Kanglish ನಲ್ಲಿ ಚಾಟ್ ಮಾಡಬಹುದು.",
     unavailable:
       "ಈಗ ಸಹಾಯಕ ಲಭ್ಯವಿಲ್ಲ. ಪ್ರಶಾಂತ್ ಅವರಿಗೆ 9986464819 ಸಂಖ್ಯೆಯಲ್ಲಿ ಕರೆ ಅಥವಾ WhatsApp ಮಾಡಬಹುದು.",
     rateLimited:
@@ -111,6 +115,8 @@ export const copy = {
     typing: "Assistant type madta ide",
     typingSteps: { default: KANGLISH_TYPING },
     restart: "Hosa chat",
+    confirmRestart: "Hosa chat start madbeka?",
+    languageHint: "English, ಕನ್ನಡ athava Kanglish alli chat madabahudu.",
     unavailable:
       "Iga assistant available illa. Prashanth avarige 9986464819 ge call athava WhatsApp madi.",
     rateLimited:

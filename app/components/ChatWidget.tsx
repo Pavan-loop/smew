@@ -6,7 +6,6 @@ import TypingIndicator from "./TypingIndicator";
 import {
   API_BASE,
   apiFetch,
-  LANGUAGE_KEY,
   rateLimitOf,
   SESSION_KEY,
   type RateLimit,
@@ -19,20 +18,26 @@ type Message = {
   role: "user" | "assistant";
   content: string;
   action?: { action: "show_lead_form"; language?: Language } | null;
+  // The server-detected language of a reply; user messages get a script-based guess.
+  language?: Language;
 };
 type Retry = { message: string; requestId: string };
 // Touch devices: avoid programmatic focus that would pop up the on-screen keyboard.
 const coarsePointer = () =>
   typeof window !== "undefined" &&
   window.matchMedia?.("(pointer: coarse)").matches;
+// lang attribute: Kannada script is "kn"; Kanglish is Latin text, so English voices read it better than Kannada ones.
+const htmlLang = (language?: Language) => (language === "kn" ? "kn" : "en");
+const scriptLanguage = (text: string): Language =>
+  /[\u0C80-\u0CFF]/.test(text) ? "kn" : "en";
 
 export default function ChatWidget() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  // The visitor's explicit choice (or English): drives the widget copy and is sent with each message.
-  // Replies follow each message's own language on the server, so a Kanglish reply never switches this.
+  // No language picker: the server detects each message's language and the widget copy (placeholder,
+  // typing status, notes, form) follows the language of the latest bot reply. A new chat starts in English.
   const [language, setLanguage] = useState<Language>("en");
   const [ready, setReady] = useState(false);
   // Set on hover/focus of the chat button or when a saved chat exists, so the session is ready before opening.
@@ -92,9 +97,6 @@ export default function ChatWidget() {
         let stored: string | null = null;
         try {
           stored = localStorage.getItem(SESSION_KEY);
-          const choice = localStorage.getItem(LANGUAGE_KEY);
-          if (choice === "en" || choice === "kn" || choice === "kanglish")
-            setLanguage(choice);
         } catch {
           /* storage may be unavailable */
         }
@@ -113,6 +115,8 @@ export default function ChatWidget() {
             tokenRef.current = stored;
             setSessionToken(stored);
             setMessages(data.messages);
+            if (["en", "kn", "kanglish"].includes(data.language))
+              setLanguage(data.language);
             setLeadSaved(data.lead_captured);
             setReady(true);
             setError("");
@@ -219,7 +223,7 @@ export default function ChatWidget() {
     else
       setMessages((old) => [
         ...old,
-        { role: "user", content: message },
+        { role: "user", content: message, language: scriptLanguage(message) },
         { role: "assistant", content: "" },
       ]);
     const controller = new AbortController();
@@ -234,7 +238,7 @@ export default function ChatWidget() {
     try {
       const response = await apiFetch("/chat", tokenRef.current, {
         method: "POST",
-        body: JSON.stringify({ message, request_id: requestId, language }),
+        body: JSON.stringify({ message, request_id: requestId }),
         signal: controller.signal,
       });
       if (response.status === 401) {
@@ -264,11 +268,17 @@ export default function ChatWidget() {
       await readSSE(response.body, (event) => {
         if (event.type === "text") {
           reply += event.text;
-          update({ content: reply });
+          update({ content: reply, language: event.language });
+          if (event.language) setLanguage(event.language);
         } else if (event.type === "action") update({ action: event });
         else if (event.type === "error") {
           serverError = true;
-          update({ content: event.text, action: null });
+          update({
+            content: event.text,
+            action: null,
+            language: event.language,
+          });
+          if (event.language) setLanguage(event.language);
         }
       });
       // A completed provider error needs a NEW request ID; the old one replays its result.
@@ -286,15 +296,7 @@ export default function ChatWidget() {
 
   function restart() {
     if (busy.current) return;
-    if (
-      messages.length &&
-      !window.confirm(
-        language === "kn"
-          ? "ಹೊಸ ಚಾಟ್ ಪ್ರಾರಂಭಿಸಬೇಕೇ?"
-          : "Start a new conversation?",
-      )
-    )
-      return;
+    if (messages.length && !window.confirm(t.confirmRestart)) return;
     tokenRef.current = null;
     setSessionToken(null);
     try {
@@ -303,6 +305,7 @@ export default function ChatWidget() {
       /* no storage */
     }
     setMessages([]);
+    setLanguage("en");
     setLeadSaved(false);
     setRetry(null);
     setError("");
@@ -346,6 +349,7 @@ export default function ChatWidget() {
           className="smew-chat-panel"
           role="region"
           aria-label={t.title}
+          lang={htmlLang(language)}
         >
           <header className="smew-chat-header">
             <div>
@@ -367,27 +371,6 @@ export default function ChatWidget() {
               ×
             </button>
           </header>
-          <div className="smew-chat-language">
-            <label htmlFor="smew-language">Language / ಭಾಷೆ</label>
-            <select
-              id="smew-language"
-              value={language}
-              onChange={(e) => {
-                const choice = e.target.value as Language;
-                setLanguage(choice);
-                try {
-                  localStorage.setItem(LANGUAGE_KEY, choice);
-                } catch {
-                  /* choice stays for this page view */
-                }
-              }}
-              disabled={loading}
-            >
-              <option value="en">English</option>
-              <option value="kn">ಕನ್ನಡ</option>
-              <option value="kanglish">Kanglish</option>
-            </select>
-          </div>
           <div
             ref={listRef}
             className="smew-chat-messages"
@@ -395,8 +378,11 @@ export default function ChatWidget() {
             aria-live="polite"
             aria-relevant="additions text"
           >
-            {/* The greeting stays as the first bubble (it used to vanish after the first message). */}
-            <div className="smew-message assistant">{t.greeting}</div>
+            {/* The greeting stays as the first bubble, in English, with a hint that any language works. */}
+            <div className="smew-message assistant" lang="en">
+              {copy.en.greeting}
+              <span className="smew-greeting-hint">{copy.en.languageHint}</span>
+            </div>
             {open && !ready && !error && (
               <p className="smew-chat-connecting" role="status">
                 {t.connecting}
@@ -410,19 +396,27 @@ export default function ChatWidget() {
                   steps={t.typingSteps}
                 />
               ) : (
-                <div key={index} className={`smew-message ${message.role}`}>
+                <div
+                  key={index}
+                  className={`smew-message ${message.role}`}
+                  lang={
+                    message.language
+                      ? htmlLang(message.language)
+                      : htmlLang(scriptLanguage(message.content))
+                  }
+                >
                   {message.content}
                   {message.action?.action === "show_lead_form" &&
                     sessionToken &&
                     !leadSaved && (
                       <LeadForm
                         sessionToken={sessionToken}
-                        language={language}
+                        language={message.action.language ?? language}
                         onSaved={() => {
                           setLeadSaved(true);
                           setMessages((old) => [
                             ...old,
-                            { role: "assistant", content: t.saved },
+                            { role: "assistant", content: t.saved, language },
                           ]);
                         }}
                       />
@@ -447,7 +441,8 @@ export default function ChatWidget() {
           </div>
           {!messages.length && (
             <div className="smew-chat-chips">
-              {t.chips.map((chip) => (
+              {/* Welcome chips are English; the visitor can still type in Kannada or Kanglish. */}
+              {copy.en.chips.map((chip) => (
                 <button
                   key={chip}
                   onClick={() => void send(chip)}

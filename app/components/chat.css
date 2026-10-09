@@ -93,20 +93,11 @@
   font-size: 23px !important;
   padding: 0 9px;
 }
-.smew-chat-language {
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--smew-border);
-  font-size: 11px;
-}
-.smew-chat-language select {
-  border: 1px solid var(--smew-border);
-  border-radius: 5px;
-  padding: 4px;
-  background: white;
+.smew-greeting-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.75;
 }
 .smew-chat-messages {
   flex: 1;

@@ -1,8 +1,6 @@
 const configuredBase = process.env.NEXT_PUBLIC_CHAT_API?.replace(/\/$/, "");
 export const API_BASE = configuredBase ?? "http://localhost:8000";
 export const SESSION_KEY = "smew_session_v2";
-// Only a language the visitor picked in the dropdown is remembered; detected reply languages are not.
-export const LANGUAGE_KEY = "smew_language_choice";
 
 export async function apiFetch(
   path: string,

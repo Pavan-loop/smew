@@ -1,7 +1,7 @@
 export type StreamEvent =
   | { type: "visitor"; visitor_id: string; protocol: number }
   | { type: "text"; text: string; language?: "en" | "kn" | "kanglish" }
-  | { type: "error"; text: string }
+  | { type: "error"; text: string; language?: "en" | "kn" | "kanglish" }
   | {
       type: "action";
       action: "show_lead_form";
